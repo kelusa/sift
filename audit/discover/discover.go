@@ -183,10 +183,10 @@ func FormatOutput(services []ServiceInfo) string {
 
 	sb.WriteString("\nSuggested commands:\n")
 	if len(secSvcs) > 0 {
-		sb.WriteString(fmt.Sprintf("  sift security --service %s\n", strings.Join(secSvcs, ",")))
+		sb.WriteString(fmt.Sprintf("  sift aws security --service %s\n", strings.Join(secSvcs, ",")))
 	}
 	if len(costSvcs) > 0 {
-		sb.WriteString(fmt.Sprintf("  sift cost --service %s\n", strings.Join(costSvcs, ",")))
+		sb.WriteString(fmt.Sprintf("  sift aws cost --service %s\n", strings.Join(costSvcs, ",")))
 	}
 	if len(uncovered) > 0 {
 		sb.WriteString(fmt.Sprintf("\nNot covered: %s\n", strings.Join(uncovered, ", ")))
