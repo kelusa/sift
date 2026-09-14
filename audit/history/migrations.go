@@ -49,6 +49,11 @@ var migrations = []string{
 		updated_at DATETIME NOT NULL,
 		PRIMARY KEY (profile, tag_key, tag_value)
 	);`,
+
+	// v4: multi-provider support - tag each scan with its source provider.
+	// Existing rows default to 'aws' so historical data stays queryable.
+	`ALTER TABLE scans ADD COLUMN provider TEXT NOT NULL DEFAULT 'aws';
+	CREATE INDEX IF NOT EXISTS idx_scans_provider ON scans(provider);`,
 }
 
 func migrate(db *sql.DB) error {
