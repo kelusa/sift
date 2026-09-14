@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"sift/audit/discover"
+	"sift/audit/aws/discover"
 
 	"github.com/spf13/cobra"
 )

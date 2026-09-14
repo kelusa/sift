@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sift/audit"
-	"sift/audit/list"
+	"sift/audit/aws/list"
 	"sort"
 	"strings"
 

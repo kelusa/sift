@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"sift/audit"
-	"sift/audit/ops"
+	"sift/audit/aws/ops"
 
 	"github.com/spf13/cobra"
 )

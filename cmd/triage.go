@@ -11,8 +11,8 @@ import (
 	"sift/audit"
 	"sift/audit/history"
 	"sift/audit/progress"
-	"sift/audit/security"
-	"sift/audit/triage"
+	"sift/audit/aws/security"
+	"sift/audit/aws/triage"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/spf13/cobra"

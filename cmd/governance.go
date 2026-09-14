@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"sift/audit"
-	"sift/audit/governance"
+	"sift/audit/aws/governance"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/spf13/cobra"

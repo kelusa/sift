@@ -9,7 +9,7 @@ import (
 	"sort"
 
 	"sift/audit"
-	"sift/audit/cost"
+	"sift/audit/aws/cost"
 	"sift/audit/history"
 
 	"github.com/spf13/cobra"

@@ -7,7 +7,7 @@ import (
 
 	"sift/audit"
 	"sift/audit/history"
-	"sift/audit/security"
+	"sift/audit/aws/security"
 
 	"github.com/spf13/cobra"
 )

@@ -10,7 +10,7 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"sift/audit/access"
+	"sift/audit/aws/access"
 
 	"github.com/spf13/cobra"
 )
