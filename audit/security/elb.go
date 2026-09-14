@@ -17,7 +17,7 @@ import (
 )
 
 func init() {
-	audit.Register(Module, audit.Checker{Name: "elb", Fn: AuditELB})
+	audit.RegisterAWS(Module, "elb", AuditELB)
 }
 
 var sensitivePortSet = map[int32]string{

@@ -13,7 +13,7 @@ import (
 )
 
 func init() {
-	audit.Register(Module, audit.Checker{Name: "backup", Fn: AuditBackup})
+	audit.RegisterAWS(Module, "backup", AuditBackup)
 }
 
 type backupVaultEntry struct {

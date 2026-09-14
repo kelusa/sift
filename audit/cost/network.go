@@ -17,7 +17,7 @@ import (
 )
 
 func init() {
-	audit.Register(Module, audit.Checker{Name: "network", Fn: AuditNetworkCost})
+	audit.RegisterAWS(Module, "network", AuditNetworkCost)
 }
 
 type natGatewayEntry struct {

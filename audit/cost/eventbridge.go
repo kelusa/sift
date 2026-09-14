@@ -16,7 +16,7 @@ import (
 )
 
 func init() {
-	audit.Register(Module, audit.Checker{Name: "eventbridge", Fn: AuditEventBridgeCost})
+	audit.RegisterAWS(Module, "eventbridge", AuditEventBridgeCost)
 }
 
 func AuditEventBridgeCost(ctx context.Context, cfg aws.Config) ([]audit.Finding, error) {

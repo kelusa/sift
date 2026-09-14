@@ -15,7 +15,7 @@ import (
 )
 
 func init() {
-	audit.Register(Module, audit.Checker{Name: "timestream", Fn: AuditTimestreamCost})
+	audit.RegisterAWS(Module, "timestream", AuditTimestreamCost)
 }
 
 func AuditTimestreamCost(ctx context.Context, cfg aws.Config) ([]audit.Finding, error) {

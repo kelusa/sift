@@ -14,7 +14,7 @@ import (
 )
 
 func init() {
-	audit.Register(Module, audit.Checker{Name: "glue", Fn: AuditGlue})
+	audit.RegisterAWS(Module, "glue", AuditGlue)
 }
 
 func AuditGlue(ctx context.Context, cfg aws.Config) ([]audit.Finding, error) {

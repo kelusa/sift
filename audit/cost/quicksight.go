@@ -14,7 +14,7 @@ import (
 )
 
 func init() {
-	audit.Register(Module, audit.Checker{Name: "quicksight", Fn: AuditQuickSightCost})
+	audit.RegisterAWS(Module, "quicksight", AuditQuickSightCost)
 }
 
 func AuditQuickSightCost(ctx context.Context, cfg aws.Config) ([]audit.Finding, error) {

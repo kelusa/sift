@@ -15,7 +15,7 @@ import (
 )
 
 func init() {
-	audit.Register(Module, audit.Checker{Name: "sagemaker", Fn: AuditSagemaker})
+	audit.RegisterAWS(Module, "sagemaker", AuditSagemaker)
 }
 
 type sageMakerNotebook struct {

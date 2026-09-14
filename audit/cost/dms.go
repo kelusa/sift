@@ -18,7 +18,7 @@ import (
 )
 
 func init() {
-	audit.Register(Module, audit.Checker{Name: "dms", Fn: AuditDMSCost})
+	audit.RegisterAWS(Module, "dms", AuditDMSCost)
 }
 
 var dmsPrevGenPrefixes = []string{

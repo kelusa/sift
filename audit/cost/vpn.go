@@ -13,7 +13,7 @@ import (
 )
 
 func init() {
-	audit.Register(Module, audit.Checker{Name: "vpn", Fn: AuditVPNCost})
+	audit.RegisterAWS(Module, "vpn", AuditVPNCost)
 }
 
 func AuditVPNCost(ctx context.Context, cfg aws.Config) ([]audit.Finding, error) {

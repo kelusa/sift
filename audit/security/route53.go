@@ -14,7 +14,7 @@ import (
 )
 
 func init() {
-	audit.Register(Module, audit.Checker{Name: "route53", Fn: AuditRoute53})
+	audit.RegisterAWS(Module, "route53", AuditRoute53)
 }
 
 var danglingCNAMESuffixes = []string{

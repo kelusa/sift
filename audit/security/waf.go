@@ -12,7 +12,7 @@ import (
 )
 
 func init() {
-	audit.Register(Module, audit.Checker{Name: "waf", Fn: AuditWAF})
+	audit.RegisterAWS(Module, "waf", AuditWAF)
 }
 
 func AuditWAF(ctx context.Context, cfg aws.Config) ([]audit.Finding, error) {

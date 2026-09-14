@@ -20,7 +20,7 @@ import (
 )
 
 func init() {
-	audit.Register(Module, audit.Checker{Name: "eks", Fn: AuditEKSCost})
+	audit.RegisterAWS(Module, "eks", AuditEKSCost)
 }
 
 type eksCostNodegroup struct {

@@ -14,7 +14,7 @@ import (
 )
 
 func init() {
-	audit.Register(Module, audit.Checker{Name: "docdb", Fn: AuditDocDB})
+	audit.RegisterAWS(Module, "docdb", AuditDocDB)
 }
 
 func AuditDocDB(ctx context.Context, cfg aws.Config) ([]audit.Finding, error) {

@@ -14,7 +14,7 @@ import (
 )
 
 func init() {
-	audit.Register(Module, audit.Checker{Name: "lambda", Fn: AuditLambda})
+	audit.RegisterAWS(Module, "lambda", AuditLambda)
 }
 
 var deprecatedRuntimes = map[string]bool{

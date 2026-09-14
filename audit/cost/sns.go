@@ -16,7 +16,7 @@ import (
 )
 
 func init() {
-	audit.Register(Module, audit.Checker{Name: "sns", Fn: AuditSNSCost})
+	audit.RegisterAWS(Module, "sns", AuditSNSCost)
 }
 
 func AuditSNSCost(ctx context.Context, cfg aws.Config) ([]audit.Finding, error) {

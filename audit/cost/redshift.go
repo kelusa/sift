@@ -16,7 +16,7 @@ import (
 )
 
 func init() {
-	audit.Register(Module, audit.Checker{Name: "redshift", Fn: AuditRedshiftCost})
+	audit.RegisterAWS(Module, "redshift", AuditRedshiftCost)
 }
 
 type redshiftCostEntry struct {

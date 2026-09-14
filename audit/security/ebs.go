@@ -12,7 +12,7 @@ import (
 )
 
 func init() {
-	audit.Register(Module, audit.Checker{Name: "ebs", Fn: AuditEBS})
+	audit.RegisterAWS(Module, "ebs", AuditEBS)
 }
 
 func AuditEBS(ctx context.Context, cfg aws.Config) ([]audit.Finding, error) {

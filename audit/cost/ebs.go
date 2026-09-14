@@ -16,7 +16,7 @@ import (
 )
 
 func init() {
-	audit.Register(Module, audit.Checker{Name: "ebs", Fn: AuditEBSCost})
+	audit.RegisterAWS(Module, "ebs", AuditEBSCost)
 }
 
 type ebsVolume struct {

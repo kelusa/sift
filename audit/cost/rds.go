@@ -18,7 +18,7 @@ import (
 )
 
 func init() {
-	audit.Register(Module, audit.Checker{Name: "rds", Fn: AuditRDSCost})
+	audit.RegisterAWS(Module, "rds", AuditRDSCost)
 }
 
 type rdsCostInstance struct {

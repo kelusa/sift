@@ -17,7 +17,7 @@ import (
 )
 
 func init() {
-	audit.Register(Module, audit.Checker{Name: "glue", Fn: AuditGlueCost})
+	audit.RegisterAWS(Module, "glue", AuditGlueCost)
 }
 
 type glueCostJob struct {

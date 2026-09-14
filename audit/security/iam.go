@@ -18,7 +18,7 @@ import (
 )
 
 func init() {
-	audit.Register(Module, audit.Checker{Name: "iam", Fn: AuditIAMHygiene})
+	audit.RegisterAWS(Module, "iam", AuditIAMHygiene)
 }
 
 type IAMFinding struct {

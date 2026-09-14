@@ -13,7 +13,7 @@ import (
 )
 
 func init() {
-	audit.Register(Module, audit.Checker{Name: "eventbridge", Fn: AuditEventBridge})
+	audit.RegisterAWS(Module, "eventbridge", AuditEventBridge)
 }
 
 func AuditEventBridge(ctx context.Context, cfg aws.Config) ([]audit.Finding, error) {

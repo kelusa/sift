@@ -27,7 +27,7 @@ var glueChecks = map[string]func(context.Context, *glue.Client, aws.Config) ([]a
 }
 
 func init() {
-	audit.Register(Module, audit.Checker{Name: "glue", Fn: AuditGlueOps})
+	audit.RegisterAWS(Module, "glue", AuditGlueOps)
 }
 
 func AuditGlueOps(ctx context.Context, cfg aws.Config) ([]audit.Finding, error) {

@@ -19,7 +19,7 @@ import (
 var opensearchPrevGen = []string{"m4.", "r4.", "i2.", "t2.", "m3.", "r3."}
 
 func init() {
-	audit.Register(Module, audit.Checker{Name: "opensearch", Fn: AuditOpenSearchCost})
+	audit.RegisterAWS(Module, "opensearch", AuditOpenSearchCost)
 }
 
 func AuditOpenSearchCost(ctx context.Context, cfg aws.Config) ([]audit.Finding, error) {

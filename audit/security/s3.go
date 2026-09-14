@@ -14,7 +14,7 @@ import (
 )
 
 func init() {
-	audit.Register(Module, audit.Checker{Name: "s3", Fn: AuditS3})
+	audit.RegisterAWS(Module, "s3", AuditS3)
 }
 
 func hasS3DataEvents(ctx context.Context, cfg aws.Config) bool {

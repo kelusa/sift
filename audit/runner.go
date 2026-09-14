@@ -13,8 +13,8 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 )
 
-type CheckFn func(context.Context, aws.Config) ([]Finding, error)
-
+// Checker is a named, provider-neutral audit unit.
+// CheckFn and the Scope it receives are defined in provider.go
 type Checker struct {
 	Name string
 	Fn   CheckFn
@@ -45,13 +45,18 @@ func RunChecks(
 		return nil, nil
 	}
 
+	// In Phase 1 RunChecks still receives an aws.Config directly;
+	// wrap it into a provider-neutral Scope so checkers see the
+	// unified CheckFn signature.
+	scope := Scope{Provider: "aws", ID: cfg.Region, Client: cfg}
+
 	results := make([][]Finding, len(checks))
 
 	if len(checks) == 1 {
 		subCtx := progress.WithSubProgress(ctx, true)
 		slog.Info("checking service", "service", checks[0].Name)
 		start := time.Now()
-		findings, err := checks[0].Fn(subCtx, cfg)
+		findings, err := checks[0].Fn(subCtx, scope)
 		if err != nil {
 			if isServiceNotAvailable(err) {
 				slog.Debug("service not available", "service", checks[0].Name, "error", err)
@@ -80,7 +85,7 @@ func RunChecks(
 				defer wg.Done()
 				slog.Info("checking service", "service", name)
 				start := time.Now()
-				findings, err := fn(subCtx, cfg)
+				findings, err := fn(subCtx, scope)
 				if err != nil {
 					if isServiceNotAvailable(err) {
 						slog.Debug("service not available", "service", name, "error", err)

@@ -14,7 +14,7 @@ import (
 )
 
 func init() {
-	audit.Register(Module, audit.Checker{Name: "cloudwatch", Fn: AuditCloudwatchCost})
+	audit.RegisterAWS(Module, "cloudwatch", AuditCloudwatchCost)
 }
 
 type logGroupEntry struct {

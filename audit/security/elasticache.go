@@ -11,7 +11,7 @@ import (
 )
 
 func init() {
-	audit.Register(Module, audit.Checker{Name: "elasticache", Fn: AuditElastiCache})
+	audit.RegisterAWS(Module, "elasticache", AuditElastiCache)
 }
 
 func AuditElastiCache(ctx context.Context, cfg aws.Config) ([]audit.Finding, error) {

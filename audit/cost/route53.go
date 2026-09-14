@@ -13,7 +13,7 @@ import (
 )
 
 func init() {
-	audit.Register(Module, audit.Checker{Name: "route53", Fn: AuditRoute53Cost})
+	audit.RegisterAWS(Module, "route53", AuditRoute53Cost)
 }
 
 func AuditRoute53Cost(ctx context.Context, cfg aws.Config) ([]audit.Finding, error) {

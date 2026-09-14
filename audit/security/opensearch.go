@@ -11,7 +11,7 @@ import (
 )
 
 func init() {
-	audit.Register(Module, audit.Checker{Name: "opensearch", Fn: AuditOpenSearch})
+	audit.RegisterAWS(Module, "opensearch", AuditOpenSearch)
 }
 
 func AuditOpenSearch(ctx context.Context, cfg aws.Config) ([]audit.Finding, error) {

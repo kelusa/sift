@@ -16,7 +16,7 @@ import (
 )
 
 func init() {
-	audit.Register(Module, audit.Checker{Name: "s3", Fn: AuditS3Cost})
+	audit.RegisterAWS(Module, "s3", AuditS3Cost)
 }
 
 type s3CostBucket struct {

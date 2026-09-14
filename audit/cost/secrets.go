@@ -15,7 +15,7 @@ import (
 )
 
 func init() {
-	audit.Register(Module, audit.Checker{Name: "secrets", Fn: AuditSecretsCost})
+	audit.RegisterAWS(Module, "secrets", AuditSecretsCost)
 }
 
 type secretCostEntry struct {

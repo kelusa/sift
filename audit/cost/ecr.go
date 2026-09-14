@@ -14,7 +14,7 @@ import (
 )
 
 func init() {
-	audit.Register(Module, audit.Checker{Name: "ecr", Fn: AuditECRCost})
+	audit.RegisterAWS(Module, "ecr", AuditECRCost)
 }
 
 type ecrRepo struct {

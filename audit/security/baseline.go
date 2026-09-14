@@ -13,7 +13,7 @@ import (
 )
 
 func init() {
-	audit.Register(Module, audit.Checker{Name: "baseline", Fn: AuditBaseline})
+	audit.RegisterAWS(Module, "baseline", AuditBaseline)
 }
 
 func baselineRisk(check string) string {

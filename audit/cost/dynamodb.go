@@ -14,7 +14,7 @@ import (
 )
 
 func init() {
-	audit.Register(Module, audit.Checker{Name: "dynamodb", Fn: AuditDynamoDBCost})
+	audit.RegisterAWS(Module, "dynamodb", AuditDynamoDBCost)
 }
 
 type dynamoDBCostTable struct {

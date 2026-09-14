@@ -13,7 +13,7 @@ import (
 )
 
 func init() {
-	audit.Register(Module, audit.Checker{Name: "dynamodb", Fn: AuditDynamoDB})
+	audit.RegisterAWS(Module, "dynamodb", AuditDynamoDB)
 }
 
 func AuditDynamoDB(ctx context.Context, cfg aws.Config) ([]audit.Finding, error) {

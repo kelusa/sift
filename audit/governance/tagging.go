@@ -52,7 +52,7 @@ type taggingConfig struct {
 }
 
 func init() {
-	audit.Register(Module, audit.Checker{Name: "tagging", Fn: AuditTagging})
+	audit.RegisterAWS(Module, "tagging", AuditTagging)
 }
 
 func loadTaggingConfig() (taggingConfig, error) {
