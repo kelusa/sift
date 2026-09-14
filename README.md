@@ -913,20 +913,21 @@ sift/
 │   └── adding-a-service.md    # Developer guide for adding new services
 ├── cmd/                        # CLI commands (cobra)
 │   ├── root.go                 # Root command + shared global flags (format, risk-level, etc.)
-│   ├── aws.go                  # AWS provider parent command; owns --profile/--region
+│   ├── aws.go                  # AWS provider parent command (`sift aws`); owns --profile/--region
 │   ├── filters.go              # Shared --provider/--account filter flags for cross-provider commands
 │   ├── run.go                  # Shared audit runner + history save
-│   ├── security.go             # Security audit command
-│   ├── cost.go                 # Cost audit command
-│   ├── ops.go                  # Ops audit command
-│   ├── list.go                 # List command (registry-driven)
-│   ├── discover.go             # Service discovery command
-│   ├── triage.go               # Triage command (posture + incident subcommands)
-│   ├── governance.go           # Governance audit command
-│   ├── history.go              # Query scan history
-│   ├── report.go               # Executive summary report
-│   ├── ai.go                   # AI analysis command
-│   └── fix.go                  # Remediation execution
+│   ├── security.go             # `sift aws security` command
+│   ├── cost.go                 # `sift aws cost` command
+│   ├── ops.go                  # `sift aws ops` command
+│   ├── list.go                 # `sift aws list` command (registry-driven)
+│   ├── discover.go             # `sift aws discover` command
+│   ├── triage.go               # `sift aws triage` command (posture + incident subcommands)
+│   ├── governance.go           # `sift aws governance` command
+│   ├── access.go               # `sift aws access` command
+│   ├── history.go              # `sift history` (cross-provider)
+│   ├── report.go               # `sift report` executive summary (cross-provider)
+│   ├── ai.go                   # `sift ai` analysis (cross-provider)
+│   └── fix.go                  # `sift fix` remediation execution (cross-provider)
 ├── config/
 │   └── config.go               # AWS credential/profile loading
 └── audit/
@@ -959,107 +960,108 @@ sift/
     │   ├── json.go             # JSON renderer
     │   ├── ai.go               # AI enrichment (summary + recommendations)
     │   └── template.html       # HTML report template with CSS
-    ├── security/
-    │   ├── security.go         # Module registration + Audit entry point
-    │   ├── sg.go               # Shared SG open-to-world helpers
-    │   ├── ec2.go              # EC2 posture analysis
-    │   ├── sagemaker.go        # SageMaker notebook + network exposure
-    │   ├── s3.go               # S3 bucket audit
-    │   ├── rds.go              # RDS instance audit
-    │   ├── eks.go              # EKS cluster audit
-    │   ├── iam.go              # IAM role policy analysis + caching
-    │   ├── secrets.go          # Secrets Manager rotation audit
-    │   ├── glue.go             # Glue catalog encryption + job security
-    │   ├── lambda.go           # Lambda public URLs + deprecated runtimes
-    │   ├── dynamodb.go         # DynamoDB encryption + PITR
-    │   ├── elb.go              # ELB exposure + DDoS readiness
-    │   ├── dms.go              # DMS public access + encryption
-    │   ├── ecr.go              # ECR scan-on-push + tag immutability
-    │   ├── redshift.go         # Redshift public access + encryption
-    │   ├── stepfunctions.go    # Step Functions logging + tracing
-    │   ├── backup.go           # Backup vault encryption
-    │   ├── baseline.go         # CloudTrail + GuardDuty (registered as cloudtrail, guardduty)
-    │   ├── ebs.go              # EBS volume encryption + public snapshots
-    │   ├── elasticache.go      # ElastiCache encryption + AUTH
-    │   ├── opensearch.go       # OpenSearch access control + encryption
-    │   ├── kms.go              # KMS key rotation + policy
-    │   ├── kinesis.go          # Kinesis stream encryption
-    │   ├── waf.go              # WAF rule coverage + rate limiting
-    │   ├── cloudfront.go       # CloudFront HTTPS + TLS + WAF
-    │   ├── acm.go              # ACM certificate expiry + renewal
-    │   ├── route53.go          # Route53 dangling records + DNSSEC
-    │   ├── sqs.go              # SQS public policies + encryption
-    │   ├── sns.go              # SNS public policies + encryption
-    │   ├── eventbridge.go      # EventBridge bus policies + DLQ
-    │   ├── efs.go              # EFS encryption at rest
-    │   ├── docdb.go            # DocDB public access + encryption
-    │   ├── msk.go              # MSK encryption + authentication
-    │   ├── directory.go        # Directory Service LDAPS + VPC
-    │   ├── cloudwatch.go       # CloudWatch log group encryption
-    │   ├── timestream.go       # Timestream CMK encryption
-    │   └── network.go          # VPC flow log queries
-    ├── triage/
-    │   ├── ec2.go              # Incident: EC2 deep investigation (IAM + flow logs)
-    │   ├── engine.go           # Posture: cross-module correlation + ranking
-    │   └── triage_test.go
-    ├── list/
-    │   ├── registry.go         # Lister registration + column definitions
-    │   ├── glue.go             # Glue jobs (run frequency, avg DPU) + crawlers
-    │   ├── vpc.go              # VPC subnets with IP usage
-    │   ├── ec2.go              # EC2 instances
-    │   ├── rds.go              # RDS instances
-    │   ├── s3.go               # S3 buckets (size, versioning, access)
-    │   ├── ebs.go              # EBS volumes
-    │   ├── lambda.go           # Lambda functions (invocations, runtime)
-    │   ├── eks.go              # EKS clusters (nodegroups, nodes, instance types)
-    │   ├── iam.go              # IAM roles (last used, policies, trust)
-    │   ├── dynamodb.go         # DynamoDB tables (mode, items, PITR)
-    │   └── elb.go              # Load balancers (type, scheme, targets)
-    ├── discover/
-    │   └── discover.go         # Service discovery via AWS Config
-    ├── ops/
-    │   ├── ops.go              # Module const + Audit entry point
-    │   └── glue.go             # Crawler version limit checks
-    ├── governance/
-    │   └── tagging.go          # Tag compliance (baseline, IaC, cost, ownership, conditional)
-    └── cost/
-        ├── cost.go             # Module registration + Audit entry point
-        ├── ec2.go              # Stopped instances, prev-gen, unused EIPs
-        ├── ebs.go              # Unattached volumes, old snapshots, GP2→GP3
-        ├── rds.go              # Stopped/oversized RDS instances
-        ├── s3.go               # Lifecycle policies + multipart uploads
-        ├── eks.go              # Empty clusters, prev-gen nodes
-        ├── network.go          # Idle NAT gateways
-        ├── cloudwatch.go       # Log groups without retention
-        ├── ecr.go              # Repos without lifecycle policies
-        ├── secrets.go          # Unused secrets
-        ├── glue.go             # Dev endpoints, job cost analysis
-        ├── lambda.go           # Unused functions, provisioned concurrency
-        ├── dynamodb.go         # Provisioned mode, unused GSIs
-        ├── dms.go              # Idle/oversized DMS instances
-        ├── elb.go              # Idle load balancers
-        ├── sagemaker.go        # Stopped notebooks
-        ├── redshift.go         # Oversized clusters
-        ├── stepfunctions.go    # Unused state machines
-        ├── backup.go           # Old recovery points
-        ├── kms.go              # Unrotated customer-managed keys
-        ├── vpn.go              # Idle VPN connections
-        ├── waf.go              # Unused Web ACLs
-        ├── kinesis.go          # Idle streams
-        ├── awsconfig.go        # Over-broad recording, unused rules
-        ├── elasticache.go      # Idle/oversized clusters
-        ├── opensearch.go       # Idle/oversized domains
-        ├── efs.go              # Unused file systems
-        ├── docdb.go            # Idle DocumentDB clusters
-        ├── directory.go        # Idle directory services
-        ├── timestream.go       # Unused Timestream databases
-        ├── quicksight.go       # Unused QuickSight resources
-        ├── msk.go              # Idle MSK clusters
-        ├── sqs.go              # Idle SQS queues
-        ├── sns.go              # Idle SNS topics
-        ├── eventbridge.go      # Idle EventBridge buses
-        ├── route53.go          # Empty hosted zones
-        └── cloudfront.go       # Idle CloudFront distributions
+    └── aws/                     # AWS provider checkers (registered via RegisterAWS)
+        ├── security/
+        │   ├── security.go         # Module registration + Audit entry point
+        │   ├── sg.go               # Shared SG open-to-world helpers
+        │   ├── ec2.go              # EC2 posture analysis
+        │   ├── sagemaker.go        # SageMaker notebook + network exposure
+        │   ├── s3.go               # S3 bucket audit
+        │   ├── rds.go              # RDS instance audit
+        │   ├── eks.go              # EKS cluster audit
+        │   ├── iam.go              # IAM role policy analysis + caching
+        │   ├── secrets.go          # Secrets Manager rotation audit
+        │   ├── glue.go             # Glue catalog encryption + job security
+        │   ├── lambda.go           # Lambda public URLs + deprecated runtimes
+        │   ├── dynamodb.go         # DynamoDB encryption + PITR
+        │   ├── elb.go              # ELB exposure + DDoS readiness
+        │   ├── dms.go              # DMS public access + encryption
+        │   ├── ecr.go              # ECR scan-on-push + tag immutability
+        │   ├── redshift.go         # Redshift public access + encryption
+        │   ├── stepfunctions.go    # Step Functions logging + tracing
+        │   ├── backup.go           # Backup vault encryption
+        │   ├── baseline.go         # CloudTrail + GuardDuty (registered as cloudtrail, guardduty)
+        │   ├── ebs.go              # EBS volume encryption + public snapshots
+        │   ├── elasticache.go      # ElastiCache encryption + AUTH
+        │   ├── opensearch.go       # OpenSearch access control + encryption
+        │   ├── kms.go              # KMS key rotation + policy
+        │   ├── kinesis.go          # Kinesis stream encryption
+        │   ├── waf.go              # WAF rule coverage + rate limiting
+        │   ├── cloudfront.go       # CloudFront HTTPS + TLS + WAF
+        │   ├── acm.go              # ACM certificate expiry + renewal
+        │   ├── route53.go          # Route53 dangling records + DNSSEC
+        │   ├── sqs.go              # SQS public policies + encryption
+        │   ├── sns.go              # SNS public policies + encryption
+        │   ├── eventbridge.go      # EventBridge bus policies + DLQ
+        │   ├── efs.go              # EFS encryption at rest
+        │   ├── docdb.go            # DocDB public access + encryption
+        │   ├── msk.go              # MSK encryption + authentication
+        │   ├── directory.go        # Directory Service LDAPS + VPC
+        │   ├── cloudwatch.go       # CloudWatch log group encryption
+        │   ├── timestream.go       # Timestream CMK encryption
+        │   └── network.go          # VPC flow log queries
+        ├── triage/
+        │   ├── ec2.go              # Incident: EC2 deep investigation (IAM + flow logs)
+        │   ├── engine.go           # Posture: cross-module correlation + ranking
+        │   └── triage_test.go
+        ├── list/
+        │   ├── registry.go         # Lister registration + column definitions
+        │   ├── glue.go             # Glue jobs (run frequency, avg DPU) + crawlers
+        │   ├── vpc.go              # VPC subnets with IP usage
+        │   ├── ec2.go              # EC2 instances
+        │   ├── rds.go              # RDS instances
+        │   ├── s3.go               # S3 buckets (size, versioning, access)
+        │   ├── ebs.go              # EBS volumes
+        │   ├── lambda.go           # Lambda functions (invocations, runtime)
+        │   ├── eks.go              # EKS clusters (nodegroups, nodes, instance types)
+        │   ├── iam.go              # IAM roles (last used, policies, trust)
+        │   ├── dynamodb.go         # DynamoDB tables (mode, items, PITR)
+        │   └── elb.go              # Load balancers (type, scheme, targets)
+        ├── discover/
+        │   └── discover.go         # Service discovery via AWS Config
+        ├── ops/
+        │   ├── ops.go              # Module const + Audit entry point
+        │   └── glue.go             # Crawler version limit checks
+        ├── governance/
+        │   └── tagging.go          # Tag compliance (baseline, IaC, cost, ownership, conditional)
+        └── cost/
+            ├── cost.go             # Module registration + Audit entry point
+            ├── ec2.go              # Stopped instances, prev-gen, unused EIPs
+            ├── ebs.go              # Unattached volumes, old snapshots, GP2→GP3
+            ├── rds.go              # Stopped/oversized RDS instances
+            ├── s3.go               # Lifecycle policies + multipart uploads
+            ├── eks.go              # Empty clusters, prev-gen nodes
+            ├── network.go          # Idle NAT gateways
+            ├── cloudwatch.go       # Log groups without retention
+            ├── ecr.go              # Repos without lifecycle policies
+            ├── secrets.go          # Unused secrets
+            ├── glue.go             # Dev endpoints, job cost analysis
+            ├── lambda.go           # Unused functions, provisioned concurrency
+            ├── dynamodb.go         # Provisioned mode, unused GSIs
+            ├── dms.go              # Idle/oversized DMS instances
+            ├── elb.go              # Idle load balancers
+            ├── sagemaker.go        # Stopped notebooks
+            ├── redshift.go         # Oversized clusters
+            ├── stepfunctions.go    # Unused state machines
+            ├── backup.go           # Old recovery points
+            ├── kms.go              # Unrotated customer-managed keys
+            ├── vpn.go              # Idle VPN connections
+            ├── waf.go              # Unused Web ACLs
+            ├── kinesis.go          # Idle streams
+            ├── awsconfig.go        # Over-broad recording, unused rules
+            ├── elasticache.go      # Idle/oversized clusters
+            ├── opensearch.go       # Idle/oversized domains
+            ├── efs.go              # Unused file systems
+            ├── docdb.go            # Idle DocumentDB clusters
+            ├── directory.go        # Idle directory services
+            ├── timestream.go       # Unused Timestream databases
+            ├── quicksight.go       # Unused QuickSight resources
+            ├── msk.go              # Idle MSK clusters
+            ├── sqs.go              # Idle SQS queues
+            ├── sns.go              # Idle SNS topics
+            ├── eventbridge.go      # Idle EventBridge buses
+            ├── route53.go          # Empty hosted zones
+            └── cloudfront.go       # Idle CloudFront distributions
 ```
 
 ## Authentication
