@@ -23,10 +23,7 @@ var historyCmd = &cobra.Command{
 	Use:   "history",
 	Short: "Query scan history from local database",
 	Run: func(cmd *cobra.Command, args []string) {
-		histProfile := ""
-		if cmd.Flags().Changed("profile") {
-			histProfile = profile
-		}
+		histProfile := account
 		db, err := history.OpenDB()
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
@@ -70,6 +67,7 @@ var historyCmd = &cobra.Command{
 			var findings []audit.Finding
 			if historyModule != "" {
 				findings, err = db.Query(
+					providerFilter,
 					historyService,
 					historyRisk,
 					"",
@@ -78,7 +76,7 @@ var historyCmd = &cobra.Command{
 				)
 			} else {
 				for _, mod := range []string{"security", "cost"} {
-					f, e := db.Query(historyService, historyRisk, "", mod, histProfile)
+					f, e := db.Query(providerFilter, historyService, historyRisk, "", mod, histProfile)
 					if e != nil {
 						err = e
 						break
@@ -126,5 +124,6 @@ func init() {
 	historyCmd.Flags().StringVar(&historyRisk, "risk", "", "Filter by risk level")
 	historyCmd.Flags().IntVar(&historyLast, "last", 0, "Show last N scans")
 	historyCmd.Flags().StringVar(&historyModule, "module", "", "Filter by module (security, cost)")
+	addFilterFlags(historyCmd.Flags())
 	rootCmd.AddCommand(historyCmd)
 }

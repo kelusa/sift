@@ -43,7 +43,7 @@ func printCostGroupBy(tagKey string) {
 	}
 	defer db.Close()
 
-	findings, err := db.Query("", "", "", "cost", profile)
+	findings, err := db.Query("aws", "", "", "", "cost", profile)
 	if err != nil || len(findings) == 0 {
 		return
 	}

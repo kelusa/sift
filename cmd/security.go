@@ -38,7 +38,7 @@ func printSecurityGroupBy(tagKey string) {
 	}
 	defer db.Close()
 
-	findings, err := db.Query("", "", "", "security", profile)
+	findings, err := db.Query("aws", "", "", "", "security", profile)
 	if err != nil || len(findings) == 0 {
 		return
 	}

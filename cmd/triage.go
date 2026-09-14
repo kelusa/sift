@@ -52,7 +52,7 @@ var triagePostureCmd = &cobra.Command{
 		var allFindings []audit.Finding
 		for _, p := range profiles {
 			for _, mod := range []string{"security", "cost", "governance"} {
-				_, findings, err := db.LatestScan(strings.TrimSpace(p), mod)
+				_, findings, err := db.LatestScan("aws", strings.TrimSpace(p), mod)
 				if err != nil {
 					continue
 				}

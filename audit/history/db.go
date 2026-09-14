@@ -21,6 +21,7 @@ type DB struct {
 
 type ScanMeta struct {
 	ID         string    `json:"id"`
+	Provider   string    `json:"provider"`
 	Profile    string    `json:"profile"`
 	Command    string    `json:"command"`
 	Region     string    `json:"region,omitempty"`
@@ -73,9 +74,14 @@ func (d *DB) SaveScan(meta ScanMeta, findings []audit.Finding) error {
 	}
 	defer tx.Rollback()
 
+	provider := meta.Provider
+	if provider == "" {
+		provider = "aws"
+	}
 	_, err = tx.Exec(
-		`INSERT INTO scans (id, profile, command, region, services, timestamp, duration_ms) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+		`INSERT INTO scans (id, provider, profile, command, region, services, timestamp, duration_ms) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
 		meta.ID,
+		provider,
 		meta.Profile,
 		meta.Command,
 		meta.Region,
@@ -131,15 +137,18 @@ func (d *DB) SaveScan(meta ScanMeta, findings []audit.Finding) error {
 	return tx.Commit()
 }
 
-func (d *DB) LatestScan(profile, command string) (*ScanMeta, []audit.Finding, error) {
-	row := d.db.QueryRow(
-		`SELECT id, profile, command, region, services, timestamp, duration_ms FROM scans WHERE profile = ? AND command = ? ORDER BY timestamp DESC LIMIT 1`,
-		profile,
-		command,
-	)
+func (d *DB) LatestScan(provider, profile, command string) (*ScanMeta, []audit.Finding, error) {
+	q := `SELECT id, provider, profile, command, region, services, timestamp, duration_ms FROM scans WHERE profile = ? AND command = ?`
+	args := []interface{}{profile, command}
+	if provider != "" {
+		q += " AND provider = ?"
+		args = append(args, provider)
+	}
+	q += " ORDER BY timestamp DESC LIMIT 1"
+	row := d.db.QueryRow(q, args...)
 
 	var meta ScanMeta
-	if err := row.Scan(&meta.ID, &meta.Profile, &meta.Command, &meta.Region, &meta.Services, &meta.Timestamp, &meta.DurationMs); err != nil {
+	if err := row.Scan(&meta.ID, &meta.Provider, &meta.Profile, &meta.Command, &meta.Region, &meta.Services, &meta.Timestamp, &meta.DurationMs); err != nil {
 		if err == sql.ErrNoRows {
 			return nil, nil, nil
 		}
@@ -167,10 +176,14 @@ func (d *DB) FindingHistory(findingID string) ([]audit.Finding, error) {
 	return scanFindings(rows)
 }
 
-func (d *DB) Query(service, riskLevel, status, module, profile string) ([]audit.Finding, error) {
+func (d *DB) Query(provider, service, riskLevel, status, module, profile string) ([]audit.Finding, error) {
 	scanSubQuery := `SELECT id, command FROM scans`
 	var conditions []string
 	var args []interface{}
+	if provider != "" {
+		conditions = append(conditions, "provider = ?")
+		args = append(args, provider)
+	}
 	if module != "" {
 		conditions = append(conditions, "command = ?")
 		args = append(args, module)
@@ -206,6 +219,9 @@ func (d *DB) Query(service, riskLevel, status, module, profile string) ([]audit.
 	if err != nil {
 		return nil, fmt.Errorf("query findings: %w", err)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate findings: %w", err)
+	}
 	defer rows.Close()
 
 	var findings []audit.Finding
@@ -217,8 +233,9 @@ func (d *DB) Query(service, riskLevel, status, module, profile string) ([]audit.
 		}
 		if remJSON.Valid && remJSON.String != "" {
 			var rem audit.Remediation
-			json.Unmarshal([]byte(remJSON.String), &rem)
-			f.Remediation = &rem
+			if err := json.Unmarshal([]byte(remJSON.String), &rem); err == nil {
+				f.Remediation = &rem
+			}
 		}
 		if tagsJSON.Valid && tagsJSON.String != "" {
 			json.Unmarshal([]byte(tagsJSON.String), &f.Tags)
@@ -258,12 +275,15 @@ func scanFindings(rows *sql.Rows) ([]audit.Finding, error) {
 		}
 		findings = append(findings, f)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate findings: %w", err)
+	}
 	return findings, nil
 }
 
 func (d *DB) RecentScans(limit int) ([]ScanMeta, error) {
 	rows, err := d.db.Query(
-		`SELECT id, profile, command, region, services, timestamp, duration_ms FROM scans ORDER BY timestamp DESC LIMIT ?`,
+		`SELECT id, provider, profile, command, region, services, timestamp, duration_ms FROM scans ORDER BY timestamp DESC LIMIT ?`,
 		limit,
 	)
 	if err != nil {
@@ -274,21 +294,25 @@ func (d *DB) RecentScans(limit int) ([]ScanMeta, error) {
 	var scans []ScanMeta
 	for rows.Next() {
 		var s ScanMeta
-		if err := rows.Scan(&s.ID, &s.Profile, &s.Command, &s.Region, &s.Services, &s.Timestamp, &s.DurationMs); err != nil {
+		if err := rows.Scan(&s.ID, &s.Provider, &s.Profile, &s.Command, &s.Region, &s.Services, &s.Timestamp, &s.DurationMs); err != nil {
 			return nil, err
 		}
 		scans = append(scans, s)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate recent scans: %w", err)
 	}
 	return scans, nil
 }
 
 func (d *DB) FindingsByCommand(
+	provider string,
 	profile string,
 	commands []string,
 ) (map[string][]audit.Finding, error) {
 	result := make(map[string][]audit.Finding)
 	for _, cmd := range commands {
-		meta, findings, err := d.LatestScan(profile, cmd)
+		meta, findings, err := d.LatestScan(provider, profile, cmd)
 		if err != nil {
 			return nil, err
 		}
@@ -323,6 +347,9 @@ func (d *DB) AgingFindings(minDays int) ([]AgingFinding, error) {
 	)
 	if err != nil {
 		return nil, fmt.Errorf("query aging findings: %w", err)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate aging findings: %w", err)
 	}
 	defer rows.Close()
 
@@ -424,6 +451,10 @@ func (d *DB) GetSpend(profiles []string, tagKey string) ([]SpendRow, error) {
 				return nil, err
 			}
 			rows = append(rows, r)
+		}
+		if err := sqlRows.Err(); err != nil {
+			sqlRows.Close()
+			return nil, err
 		}
 		sqlRows.Close()
 	}
