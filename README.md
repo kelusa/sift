@@ -20,24 +20,35 @@ pre-commit install
 
 ## Usage
 
+AWS audit commands live under the `aws` provider group:
+
 ```bash
-sift <command> --profile <aws-profile> [flags]
+sift aws <command> --profile <aws-profile> [flags]
+```
+
+Cross-provider commands stay at the top level:
+
+```bash
+sift <report|history|ai|fix> [flags]
 ```
 
 ### Global flags
 
+These root-level flags apply to all commands:
+
 | Flag | Default | Description |
 |------|---------|-------------|
-| `--profile` | `default` | AWS profile name (from `~/.aws/config`) |
 | `--format` | `table` (terminal) / `json` (pipe) | Output format: `json`, `csv`, or `table` |
 | `--risk-level` | | Minimum risk level to show: `MINIMAL`, `LOW`, `MEDIUM`, `HIGH`, `CRITICAL` |
-| `--region` | profile region | AWS region(s), comma-separated or `all` |
 | `--sort-by` | `risk` | Sort results by: `risk` or `cost` |
+| `--concurrency` | | Maximum number of concurrent checks |
 | `--diff` | `false` | Compare results to previous scan |
 | `--no-save` | `false` | Don't save scan results to history |
 | `--verbose` | `false` | Show debug-level log output |
 | `--progress` | `false` | Show progress bars |
 | `--output`, `-o` | stdout | Write results to file instead of stdout |
+
+> `--profile` and `--region` are flags of the `sift aws` command group (they apply to `sift aws <subcommand>`), not root-level global flags. Cross-provider commands (`report`, `history`, `ai`) use `--provider` and `--account` to filter stored findings instead.
 
 ### Commands
 
@@ -47,14 +58,14 @@ Audit AWS resource security posture across services.
 
 ```bash
 # All services
-sift security --profile dev
+sift aws security --profile dev
 
 # Specific services
-sift security --profile dev --service ec2,s3
-sift security --profile dev --service eks
+sift aws security --profile dev --service ec2,s3
+sift aws security --profile dev --service eks
 
 # Only high and critical findings
-sift security --profile dev --risk-level HIGH
+sift aws security --profile dev --risk-level HIGH
 ```
 
 Available services: `ec2`, `sagemaker`, `s3`, `rds`, `eks`, `iam`, `secrets`, `glue`, `lambda`, `dynamodb`, `elb`, `dms`, `ecr`, `redshift`, `stepfunctions`, `backup`, `cloudtrail`, `guardduty`, `ebs`, `elasticache`, `opensearch`, `kms`, `kinesis`, `waf`, `cloudfront`, `acm`, `route53`, `sqs`, `sns`, `eventbridge`, `efs`, `docdb`, `msk`, `directory`, `cloudwatch`, `timestream`, `awsconfig`
@@ -65,21 +76,21 @@ Detect cost waste across AWS resources. Shows estimated monthly cost per resourc
 
 ```bash
 # All services
-sift cost --profile dev
+sift aws cost --profile dev
 
 # Specific services
-sift cost --profile dev --service ec2,s3
-sift cost --profile dev --service ebs,cloudwatch
+sift aws cost --profile dev --service ec2,s3
+sift aws cost --profile dev --service ebs,cloudwatch
 
 # Sort by highest cost first
-sift cost --profile dev --sort-by cost
+sift aws cost --profile dev --sort-by cost
 
 # Group waste by tag
-sift cost --profile dev --group-by Project
-sift cost --profile dev --group-by Team
+sift aws cost --profile dev --group-by Project
+sift aws cost --profile dev --group-by Team
 
 # Show what changed since last scan
-sift cost --profile dev --diff
+sift aws cost --profile dev --diff
 ```
 
 Available services: `ec2`, `ebs`, `rds`, `s3`, `eks`, `network`, `cloudwatch`, `ecr`, `secrets`, `glue`, `lambda`, `dynamodb`, `dms`, `elb`, `sagemaker`, `redshift`, `stepfunctions`, `backup`, `kms`, `vpn`, `waf`, `kinesis`, `awsconfig`, `elasticache`, `opensearch`, `efs`, `docdb`, `directory`, `timestream`, `quicksight`, `msk`, `sqs`, `sns`, `eventbridge`, `route53`, `cloudfront`
@@ -90,14 +101,14 @@ Audit operational risks and service limits.
 
 ```bash
 # All services
-sift ops --profile dev
+sift aws ops --profile dev
 
 # Specific services
-sift ops --profile dev --service glue
+sift aws ops --profile dev --service glue
 
 # Specific checks within a service
-sift ops --profile dev --service glue --check table_versions
-sift ops --profile dev --service glue --check crawlers,job_versions
+sift aws ops --profile dev --service glue --check table_versions
+sift aws ops --profile dev --service glue --check crawlers,job_versions
 ```
 
 Available services: `glue`
@@ -115,42 +126,42 @@ List AWS resources with metadata for inventory and discovery.
 
 ```bash
 # List all Glue resources
-sift list glue --profile dev
+sift aws list glue --profile dev
 
 # List specific resource types
-sift list glue jobs --profile dev
-sift list glue crawlers --profile dev --format csv -o crawlers.csv
+sift aws list glue jobs --profile dev
+sift aws list glue crawlers --profile dev --format csv -o crawlers.csv
 
 # List VPC subnets with IP usage
-sift list vpc --profile dev
-sift list vpc subnets --profile dev --format table
+sift aws list vpc --profile dev
+sift aws list vpc subnets --profile dev --format table
 
 # List EC2 instances
-sift list ec2 --profile dev
+sift aws list ec2 --profile dev
 
 # List RDS instances
-sift list rds --profile dev
+sift aws list rds --profile dev
 
 # List S3 buckets with size, versioning, access
-sift list s3 --profile dev
+sift aws list s3 --profile dev
 
 # List EBS volumes
-sift list ebs --profile dev
+sift aws list ebs --profile dev
 
 # List Lambda functions with invocation data
-sift list lambda --profile dev
+sift aws list lambda --profile dev
 
 # List EKS clusters with nodegroup details
-sift list eks --profile dev
+sift aws list eks --profile dev
 
 # List IAM roles with usage
-sift list iam --profile dev
+sift aws list iam --profile dev
 
 # List DynamoDB tables
-sift list dynamodb --profile dev
+sift aws list dynamodb --profile dev
 
 # List load balancers
-sift list elb --profile dev
+sift aws list elb --profile dev
 ```
 
 Available services: `glue`, `vpc`, `ec2`, `rds`, `s3`, `ebs`, `lambda`, `eks`, `iam`, `dynamodb`, `elb`
@@ -160,7 +171,7 @@ Available services: `glue`, `vpc`, `ec2`, `rds`, `s3`, `ebs`, `lambda`, `eks`, `
 Discover active AWS services in your account and show sift coverage. Uses AWS Config to detect which services have resources.
 
 ```bash
-sift discover --profile dev
+sift aws discover --profile dev
 ```
 
 Output shows resource counts per service, which sift modules cover each service (security, cost, list), and suggests commands to run.
@@ -177,16 +188,16 @@ Correlate findings across security, cost, and governance modules per resource. R
 
 ```bash
 # Single profile
-sift triage posture --profile dev
+sift aws triage posture --profile dev
 
 # Aggregated across environments
-sift triage posture --profile dev,qa,prd
+sift aws triage posture --profile dev,qa,prd
 
 # All profiles in history
-sift triage posture
+sift aws triage posture
 ```
 
-Requires prior scan data (`sift security`, `sift cost`, `sift governance`).
+Requires prior scan data (`sift aws security`, `sift aws cost`, `sift aws governance`).
 
 ##### Incident
 
@@ -194,10 +205,10 @@ Deep investigation of specific services during an incident.
 
 ```bash
 # EC2: posture + IAM + flow logs
-sift triage incident ec2 --profile dev --log-group /vpc/flowlogs
+sift aws triage incident ec2 --profile dev --log-group /vpc/flowlogs
 
 # Single instance
-sift triage incident ec2 --profile dev --log-group /vpc/flowlogs --instance i-0abc123
+sift aws triage incident ec2 --profile dev --log-group /vpc/flowlogs --instance i-0abc123
 ```
 
 | Flag | Required | Description |
@@ -211,13 +222,13 @@ Audit governance compliance across AWS resources. Config-driven checks for taggi
 
 ```bash
 # All governance checks
-sift governance --profile dev
+sift aws governance --profile dev
 
 # Tagging compliance only
-sift governance --profile dev --check tagging
+sift aws governance --profile dev --check tagging
 
 # Tagging scoped to specific services
-sift governance --profile dev --check tagging --service ec2,rds,s3
+sift aws governance --profile dev --check tagging --service ec2,rds,s3
 ```
 
 | Flag | Description |
@@ -265,7 +276,7 @@ Pricing can be customized without rebuilding by placing a `prices.json` at `~/.s
 Scan results are stored in a local SQLite database at `~/.sift/sift.db`. Use `--diff` to compare against the previous scan:
 
 ```bash
-sift cost --profile dev --diff
+sift aws cost --profile dev --diff
 ```
 
 Output:
@@ -292,6 +303,9 @@ sift history --service ec2 --risk CRITICAL
 sift history --module security
 sift history --module cost
 
+# Filter by provider and account/identity
+sift history --provider aws --account dev
+
 # Track a specific finding over time
 sift history --finding <id>
 
@@ -306,6 +320,8 @@ sift history --service s3 --format json
 | `--service` | Filter findings by service |
 | `--risk` | Filter findings by risk level |
 | `--last` | Show last N scans |
+| `--provider` | Filter stored findings by provider (`aws`, `aria`). Default: all |
+| `--account` | Filter stored findings by account/identity. Default: all |
 
 ## AI analysis
 
@@ -316,17 +332,17 @@ Analyze findings with a local or remote LLM:
 docker compose up -d
 
 # Analyze latest findings
-sift ai --profile dev
+sift ai --account dev
 
 # Scope to module/service
-sift ai --profile dev --module security
-sift ai --profile dev --service ec2
+sift ai --account dev --module security
+sift ai --account dev --service ec2
 
 # Custom question
-sift ai --profile dev "What's the most urgent fix?"
+sift ai --account dev "What's the most urgent fix?"
 ```
 
-Configure the endpoint in `~/.sift/ai.json`. See [docs/ai.md](docs/ai.md) for full setup and options.
+Analysis reads from stored findings, so filter with `--provider aws|aria` and `--account <identity>` to scope which findings are analyzed. Configure the endpoint in `~/.sift/ai.json`. See [docs/ai.md](docs/ai.md) for full setup and options.
 
 ## Executive report
 
@@ -334,19 +350,19 @@ Generate a summary for business stakeholders:
 
 ```bash
 # Single environment
-sift report --profile dev
+sift report --account dev
 
 # Aggregated across environments
-sift report --profile icloud-dev,icloud-qa,icloud-prd
+sift report --account icloud-dev,icloud-qa,icloud-prd
 
 # HTML output
-sift report --profile dev --format html -o report.html
+sift report --account dev --format html -o report.html
 
 # JSON output
-sift report --profile dev --format json
+sift report --account dev --format json
 
 # With AI-generated summary and recommendations
-sift report --profile dev --ai
+sift report --account dev --ai
 ```
 
 Output includes:
@@ -365,6 +381,8 @@ The health score penalizes CRITICAL findings 4x more than LOW, giving a single t
 
 | Flag | Description |
 |------|-------------|
+| `--provider` | Filter stored findings by provider (`aws`, `aria`). Default: all |
+| `--account` | Filter stored findings by account/identity. Default: all |
 | `--format` | Output format: `text` (default), `html`, `json` |
 | `--ai` | Enrich report with AI-generated summary and recommended actions |
 | `-o` | Write output to file |
@@ -894,7 +912,9 @@ sift/
 ├── docs/
 │   └── adding-a-service.md    # Developer guide for adding new services
 ├── cmd/                        # CLI commands (cobra)
-│   ├── root.go                 # Global flags
+│   ├── root.go                 # Root command + shared global flags (format, risk-level, etc.)
+│   ├── aws.go                  # AWS provider parent command; owns --profile/--region
+│   ├── filters.go              # Shared --provider/--account filter flags for cross-provider commands
 │   ├── run.go                  # Shared audit runner + history save
 │   ├── security.go             # Security audit command
 │   ├── cost.go                 # Cost audit command
@@ -911,6 +931,7 @@ sift/
 │   └── config.go               # AWS credential/profile loading
 └── audit/
     ├── finding.go              # Finding struct definition
+    ├── provider.go             # Provider-neutral Scope/Provider abstraction + AWS adapter (RegisterAWS)
     ├── registry.go             # Service self-registration (Register/CheckersFor)
     ├── runner.go               # Generic parallel orchestrator (RunChecks)
     ├── process.go              # Concurrent processors (ProcessAll/ProcessAllMulti/FetchAll)

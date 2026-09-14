@@ -37,17 +37,17 @@ You can point this to any OpenAI-compatible chat API (Ollama, vLLM, Bedrock, Ope
 
 ```bash
 # Analyze all latest findings (security + cost)
-sift ai --profile dev
+sift ai --account dev
 
 # Scope to a module
-sift ai --profile dev --module security
-sift ai --profile dev --module cost
+sift ai --account dev --module security
+sift ai --account dev --module cost
 
 # Scope to a service
-sift ai --profile dev --service ec2
+sift ai --account dev --service ec2
 
 # Custom question
-sift ai --profile dev "What is the most urgent issue to fix?"
+sift ai --account dev "What is the most urgent issue to fix?"
 
 # Analyze a specific finding by ID
 sift ai --finding a3b2c1d4e5f6a7b8

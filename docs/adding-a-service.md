@@ -5,6 +5,7 @@ This guide explains how to add a new audit service to sift.
 ## Architecture
 
 ```bash
+audit/provider.go   — Provider-neutral Scope/Provider abstraction + RegisterAWS adapter
 audit/registry.go   — Self-registration of checkers per module (security, cost, ops)
 audit/runner.go     — Generic parallel orchestrator (RunChecks)
 audit/process.go    — Concurrent item processor (ProcessAll, ProcessAllMulti, FetchAll)
@@ -12,11 +13,14 @@ audit/process.go    — Concurrent item processor (ProcessAll, ProcessAllMulti, 
 
 Each module (`security`, `cost`, `ops`) has a registry. Services register themselves via `init()`, so adding a new service requires **one file with zero edits elsewhere**.
 
+`audit/provider.go` defines the provider-neutral `Scope`/`Provider` abstraction and the internal `CheckFn(ctx, audit.Scope)` signature the runner consumes. AWS services register with `audit.RegisterAWS(Module, "<name>", <Fn>)`, which adapts an AWS checker (`func(ctx, aws.Config) ([]audit.Finding, error)`) to that internal signature. Non-AWS providers register with the plain `audit.Register` using a `CheckFn(ctx, audit.Scope)` directly.
+
 ### Package layout
 
 ```bash
 audit/
 ├── runner.go          # RunChecks — generic orchestrator
+├── provider.go        # Scope/Provider abstraction + RegisterAWS adapter
 ├── registry.go        # Register/CheckersFor/ValidServices
 ├── process.go         # ProcessAll, ProcessAllMulti, FetchAll
 ├── finding.go         # Finding struct
@@ -44,7 +48,7 @@ import (
 )
 
 func init() {
-    audit.Register(Module, audit.Checker{Name: "sqs", Fn: AuditSQS})
+    audit.RegisterAWS(Module, "sqs", AuditSQS)
 }
 
 func AuditSQS(ctx context.Context, cfg aws.Config) ([]audit.Finding, error) {
@@ -127,7 +131,7 @@ For composite ResourceIDs (e.g., `cluster/nodegroup`), pass the full composite t
 
 Unresolvable values (user must fill in) use `<placeholder>` syntax and trigger a warning in `sift fix`.
 
-That's it. The service automatically appears in `sift security --service sqs`.
+That's it. The service automatically appears in `sift aws security --service sqs`.
 
 ## Adding a Cost Check
 
@@ -144,7 +148,7 @@ import (
 )
 
 func init() {
-    audit.Register(Module, audit.Checker{Name: "sqs", Fn: AuditSQSCost})
+    audit.RegisterAWS(Module, "sqs", AuditSQSCost)
 }
 
 func AuditSQSCost(ctx context.Context, cfg aws.Config) ([]audit.Finding, error) {
@@ -202,7 +206,7 @@ Register in `audit/ops/`:
 
 ```go
 func init() {
-    audit.Register(ops.Module, audit.Checker{Name: "myservice", Fn: AuditMyServiceOps})
+    audit.RegisterAWS(ops.Module, "myservice", AuditMyServiceOps)
 }
 ```
 
@@ -278,7 +282,7 @@ No self-registration, no remediation, no ProcessAll helpers needed.
 ## Checklist
 
 1. Create one file in the appropriate `audit/<module>/` directory
-2. Add `func init()` with `audit.Register()`
+2. Add `func init()` with `audit.RegisterAWS()`
 3. Implement the `func(context.Context, aws.Config) ([]audit.Finding, error)` signature
 4. Use `ProcessAll`, `ProcessAllMulti`, or `FetchAll` for the processing loop
 5. Add remediation via `remediation.Recommend()` for non-MINIMAL findings
