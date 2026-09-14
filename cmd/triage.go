@@ -159,5 +159,5 @@ func init() {
 
 	triageIncidentCmd.AddCommand(triageIncidentEC2Cmd)
 	triageCmd.AddCommand(triagePostureCmd, triageIncidentCmd)
-	rootCmd.AddCommand(triageCmd)
+	awsCmd.AddCommand(triageCmd)
 }

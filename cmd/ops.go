@@ -34,5 +34,5 @@ func init() {
 	opsCmd.Flags().
 		StringVar(&opsServices, "service", "", serviceUsage(audit.ValidServices(ops.Module)))
 	opsCmd.Flags().StringVar(&opsCheck, "check", "", "Comma-separated checks within a service")
-	rootCmd.AddCommand(opsCmd)
+	awsCmd.AddCommand(opsCmd)
 }

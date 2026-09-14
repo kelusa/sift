@@ -37,5 +37,5 @@ var discoverCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(discoverCmd)
+	awsCmd.AddCommand(discoverCmd)
 }

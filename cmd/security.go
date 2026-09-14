@@ -121,5 +121,5 @@ func init() {
 		StringVar(&securityServices, "service", "", serviceUsage(audit.ValidServices(security.Module)))
 	securityCmd.Flags().
 		StringVar(&secGroupBy, "group-by", "", "Group findings by tag key (e.g., Project, Team)")
-	rootCmd.AddCommand(securityCmd)
+	awsCmd.AddCommand(securityCmd)
 }

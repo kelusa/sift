@@ -158,5 +158,5 @@ func init() {
 		StringVar(&costServices, "service", "", serviceUsage(audit.ValidServices(cost.Module)))
 	costCmd.Flags().
 		StringVar(&groupBy, "group-by", "", "Group cost by tag key (e.g., Project, Team)")
-	rootCmd.AddCommand(costCmd)
+	awsCmd.AddCommand(costCmd)
 }

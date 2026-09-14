@@ -129,13 +129,10 @@ func Execute() {
 
 func init() {
 	rootCmd.CompletionOptions.HiddenDefaultCmd = true
-	rootCmd.PersistentFlags().StringVar(&profile, "profile", "default", "AWS profile name")
 	rootCmd.PersistentFlags().
 		StringVar(&format, "format", "", "Output format (json|csv|table). Default: table for terminal, json for pipes")
 	rootCmd.PersistentFlags().
 		StringVar(&riskLevel, "risk-level", "", "Minimum risk level to show (MINIMAL|LOW|MEDIUM|HIGH|CRITICAL)")
-	rootCmd.PersistentFlags().
-		StringVar(&region, "region", "", "AWS region(s), comma-separated or 'all' (default: profile region)")
 	rootCmd.PersistentFlags().BoolVar(&verbose, "verbose", false, "Show debug-level log output")
 	rootCmd.PersistentFlags().BoolVar(&showProgress, "progress", false, "Show progress bars")
 	rootCmd.PersistentFlags().
