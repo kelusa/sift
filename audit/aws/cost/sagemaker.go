@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sift/audit"
-	"sift/audit/pricing"
+	"sift/audit/aws/pricing"
 	"sift/audit/remediation"
 
 	"github.com/aws/aws-sdk-go-v2/aws"

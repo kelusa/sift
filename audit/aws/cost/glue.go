@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"sift/audit"
-	"sift/audit/pricing"
+	"sift/audit/aws/pricing"
 	"sift/audit/progress"
 	"sift/audit/remediation"
 

@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
+
+	_ "sift/audit/aws"
 )
 
 // awsCmd is the parent for all AWS provider-scoped audit commands.
