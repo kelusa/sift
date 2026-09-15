@@ -9,7 +9,6 @@
 package client
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -24,13 +23,19 @@ import (
 type Client struct {
 	host  string // e.g. "https://aria.corp.example.com" (scheme required)
 	http  *http.Client
-	token string // bearer access token (populated by Login)
+	token string // bearer access token (provided at construction)
 }
 
 // Options configures a Client.
 type Options struct {
 	// Host is the Aria appliance base URL, with scheme (https://...).
 	Host string
+	// Token is a pre-obtained bearer access token. On instances where API
+	// tokens / service accounts are not available (login is via browser
+	// OAuth/PKCE), users obtain this token from an authenticated browser
+	// session and provide it via the SIFT_ARIA_TOKEN environment variable or a
+	// secure prompt - never on the command line, never persisted to config.
+	Token string
 	// InsecureSkipVerify disables TLS verification (common for on-prem
 	// appliances using self-signed certs). Off by default.
 	InsecureSkipVerify bool
@@ -38,7 +43,8 @@ type Options struct {
 	Timeout time.Duration
 }
 
-// New constructs a Client. Call Login before making authenticated calls.
+// New constructs a Client from a pre-obtained bearer token. The client is
+// ready to make authenticated calls immediately.
 func New(opts Options) (*Client, error) {
 	host := strings.TrimRight(strings.TrimSpace(opts.Host), "/")
 	if host == "" {
@@ -46,6 +52,9 @@ func New(opts Options) (*Client, error) {
 	}
 	if !strings.HasPrefix(host, "http://") && !strings.HasPrefix(host, "https://") {
 		return nil, fmt.Errorf("aria: host must include scheme (https://...): %q", host)
+	}
+	if strings.TrimSpace(opts.Token) == "" {
+		return nil, fmt.Errorf("aria: bearer token is required (set SIFT_ARIA_TOKEN)")
 	}
 	timeout := opts.Timeout
 	if timeout == 0 {
@@ -58,79 +67,20 @@ func New(opts Options) (*Client, error) {
 	}
 
 	return &Client{
-		host: host,
-		http: &http.Client{Timeout: timeout, Transport: transport},
+		host:  host,
+		http:  &http.Client{Timeout: timeout, Transport: transport},
+		token: strings.TrimSpace(opts.Token),
 	}, nil
 }
 
 // Host returns the base URL this client targets (used as the scope ID).
 func (c *Client) Host() string { return c.host }
 
-// loginRequest / loginResponse model the on-prem 8.x IaaS login token exchange:
-//
-//	POST {host}/iaas/api/login { "refreshToken": "<api-token>" }
-//		-> 200 { "token": "<bearer>" }
-//
-// NOTE: field names confirmed against the target instance's Swagger before
-// finalizing. If the appliance uses the CSP gateway path instead
-// (/csp/gateway/am/api/login returning { "access_token": ... }), adjust
-// loginPath and the response field here.
-const loginPath = "/iaas/api/login"
-
-type loginRequest struct {
-	RefreshToken string `json:"refreshToken"`
-}
-
-type loginResponse struct {
-	Token string `json:"token"`
-}
-
-// Login exchanges the refresh token for a bearer access token and stores it
-// on the client for subsequent requests.
-func (c *Client) Login(ctx context.Context, refreshToken string) error {
-	if strings.TrimSpace(refreshToken) == "" {
-		return fmt.Errorf("aria: refresh token is required")
-	}
-
-	body, err := json.Marshal(loginRequest{RefreshToken: refreshToken})
-	if err != nil {
-		return fmt.Errorf("aria: marshal login request: %w", err)
-	}
-
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, c.host+loginPath, bytes.NewReader(body))
-	if err != nil {
-		return fmt.Errorf("aria: login request failed: %w", err)
-	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/json")
-
-	resp, err := c.http.Do(req)
-	if err != nil {
-		return fmt.Errorf("aria: login request failed: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		snippet, _ := io.ReadAll(io.LimitReader(resp.Body, 512))
-		return fmt.Errorf("aria: login returned %d: %s", resp.StatusCode, strings.TrimSpace(string(snippet)))
-	}
-
-	var lr loginResponse
-	if err := json.NewDecoder(resp.Body).Decode(&lr); err != nil {
-		return fmt.Errorf("aria: decode login response: %w", err)
-	}
-	if lr.Token == "" {
-		return fmt.Errorf("aria: login response contained no token")
-	}
-	c.token = lr.Token
-	return nil
-}
-
 // GetJSON performs an authenticated GET against path (which may include a query
 // string) and decodes the JSOn response into out.
 func (c *Client) GetJSON(ctx context.Context, path string, out any) error {
 	if c.token == "" {
-		return fmt.Errorf("aria: not authenticated (call Login first)")
+		return fmt.Errorf("aria: not authenticated (no bearer token)")
 	}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.host+path, nil)
