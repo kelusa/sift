@@ -40,6 +40,11 @@ var ariaListCmd = &cobra.Command{
 			os.Exit(2)
 		}
 
+		if err := resolveFormat(); err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(2)
+		}
+
 		cfg, err := aria.LoadConfig(ariaHost, ariaInsecure)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error: %v\n", err)

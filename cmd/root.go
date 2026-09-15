@@ -150,7 +150,10 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&diff, "diff", false, "Compare results to previous scan")
 }
 
-func buildAWSConfig() (context.Context, aws.Config, context.CancelFunc, error) {
+// resolveFormat applies the default output format (table for a terminal,
+// json for a pipe) when --format was not set, and validates the value.
+// Shared by all commands that produce output, regardless of provider.
+func resolveFormat() error {
 	if format == "" {
 		if term.IsTerminal(int(os.Stdout.Fd())) {
 			format = "table"
@@ -159,10 +162,14 @@ func buildAWSConfig() (context.Context, aws.Config, context.CancelFunc, error) {
 		}
 	}
 	if format != "json" && format != "csv" && format != "table" {
-		return nil, aws.Config{}, nil, fmt.Errorf(
-			"unknown format %q (use json, csv or table)",
-			format,
-		)
+		return fmt.Errorf("unknown format %q (use json, csv or table)", format)
+	}
+	return nil
+}
+
+func buildAWSConfig() (context.Context, aws.Config, context.CancelFunc, error) {
+	if err := resolveFormat(); err != nil {
+		return nil, aws.Config{}, nil, err
 	}
 	if riskLevel != "" {
 		valid := map[string]bool{
