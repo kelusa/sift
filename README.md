@@ -269,7 +269,7 @@ Create `~/.sift/tagging.json` to define your tagging policy:
 
 Cost findings include an `estimated_monthly_cost` field calculated from a static pricing table (eu-west-1). The table output shows a `$/MO` column and the summary shows total estimated waste.
 
-Pricing can be customized without rebuilding by placing a `prices.json` at `~/.sift/prices.json`. See `audit/pricing/prices.json` for the format.
+Pricing can be customized without rebuilding by placing a `prices.json` at `~/.sift/prices.json`. See `audit/aws/pricing/prices.json` for the format.
 
 ## Scan history & diff
 
@@ -419,7 +419,7 @@ Example (JSON output):
 }
 ```
 
-Remediations can be customized without rebuilding by placing a `remediations.json` at `~/.sift/remediations.json`. See `audit/remediation/remediations.json` for the format.
+Remediations can be customized without rebuilding by placing a `remediations.json` at `~/.sift/remediations.json`. See `audit/aws/remediations.json` for the format.
 
 ### Executing remediations
 
@@ -938,9 +938,6 @@ sift/
     ├── process.go              # Concurrent processors (ProcessAll/ProcessAllMulti/FetchAll)
     ├── output.go               # JSON/CSV/table output formatter
     ├── thresholds.go           # Configurable thresholds
-    ├── pricing/
-    │   ├── pricing.go          # Price lookup (embedded + ~/.sift/prices.json override)
-    │   └── prices.json         # Static pricing data (eu-west-1)
     ├── history/
     │   ├── db.go               # SQLite storage (scans, findings, queries)
     │   ├── migrations.go       # Versioned schema migrations
@@ -948,8 +945,7 @@ sift/
     ├── progress/
     │   └── progress.go         # Progress bar utilities
     ├── remediation/
-    │   ├── remediation.go      # Remediation recommendation engine
-    │   └── remediations.json   # Remediation templates
+    │   └── remediation.go      # Provider-neutral remediation engine (RegisterTemplates + ~/.sift/remediations.json override)
     ├── ai/
     │   └── ai.go               # LLM integration (Ollama/OpenAI-compatible)
     ├── report/
@@ -961,6 +957,12 @@ sift/
     │   ├── ai.go               # AI enrichment (summary + recommendations)
     │   └── template.html       # HTML report template with CSS
     └── aws/                     # AWS provider checkers (registered via RegisterAWS)
+        ├── aws.go                  # AWS provider wiring: embeds + registers remediations.json
+        ├── remediations.json       # AWS remediation templates (embedded, registered into the engine)
+        ├── pricing/
+        │   ├── pricing.go          # Price lookup (embedded + ~/.sift/prices.json override)
+        │   ├── graviton.go         # Graviton savings estimates
+        │   └── prices.json         # Static pricing data (eu-west-1)
         ├── security/
         │   ├── security.go         # Module registration + Audit entry point
         │   ├── sg.go               # Shared SG open-to-world helpers

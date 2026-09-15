@@ -93,7 +93,7 @@ func AuditSQS(ctx context.Context, cfg aws.Config) ([]audit.Finding, error) {
 }
 ```
 
-Then add remediation templates to `audit/remediation/remediations.json`:
+Then add remediation templates to `audit/aws/remediations.json`:
 
 ```json
 "sqs": {
@@ -286,7 +286,7 @@ No self-registration, no remediation, no ProcessAll helpers needed.
 3. Implement the `func(context.Context, aws.Config) ([]audit.Finding, error)` signature
 4. Use `ProcessAll`, `ProcessAllMulti`, or `FetchAll` for the processing loop
 5. Add remediation via `remediation.Recommend()` for non-MINIMAL findings
-6. Add remediation template to `audit/remediation/remediations.json`
+6. Add remediation template to `audit/aws/remediations.json`
 7. Use descriptive check names per issue (e.g., `no_encryption`, `public_access`) — not generic `<service>_security`
 8. Use `len(results) == 0` to emit a PASS finding, not a separate boolean
 9. Build and test: `go build ./... && go test ./...`
