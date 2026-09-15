@@ -66,7 +66,7 @@ func LoadConfig(hostFlag string, insecureFlag bool) (Config, error) {
 
 	cfg.Token = strings.TrimSpace(os.Getenv(TokenEnvVar))
 	if cfg.Token == "" {
-		return cfg, fmt.Errorf("aria: no bearer token found; set %s (obtain it from an authenticated browser session)", TokenEnvVar)
+		return cfg, fmt.Errorf("aria: no bearer token found; set %s in the environment or a .env file (obtain it from an authenticated browser session)", TokenEnvVar)
 	}
 
 	return cfg, nil
