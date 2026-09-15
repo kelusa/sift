@@ -15,6 +15,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
 )
@@ -37,6 +38,9 @@ var rootCmd = &cobra.Command{
 	Use:   "sift",
 	Short: "AWS security and cost audit tool",
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		// Load .env (if present) so SIFT_* variables are available.
+		// Real environment variables already set take precedence (godotenv default).
+		_ = godotenv.Load()
 		setupLogging()
 	},
 }
