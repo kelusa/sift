@@ -3,12 +3,15 @@ package cmd
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"os"
 	"time"
 
 	"sift/audit"
 	"sift/audit/aria"
 	"sift/audit/aria/client"
+	"sift/audit/history"
+	"sift/audit/progress"
 
 	"github.com/spf13/cobra"
 )
@@ -133,6 +136,92 @@ func firstNonEmpty(vals ...string) string {
 		}
 	}
 	return ""
+}
+
+var ariaGovernanceCmd = &cobra.Command{
+	Use:   "governance",
+	Short: "Audit Aria Automation governance compliance",
+	Run: func(cmd *cobra.Command, args []string) {
+		runAriaAudit("governance", audit.CheckersFor(aria.ModuleGovernance), "Auditing Aria Governance")
+		if exitCode != 0 {
+			os.Exit(exitCode)
+		}
+	},
+}
+
+// runAriaAudit builds an Aria scope, runs the given checkers via the neutral
+// orchestrator, then outputs and (unless --no-save) persists findings tagged
+// with provider="aria" and the host as the account identity.
+func runAriaAudit(command string, checkers []audit.Checker, label string) {
+	start := time.Now()
+
+	cfg, err := aria.LoadConfig(ariaHost, ariaInsecure)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(2)
+	}
+
+	prov := aria.NewProvider(cfg)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+	if !showProgress {
+		ctx = progress.WithQuiet(ctx, true)
+	}
+
+	scopes, err := prov.Scopes(ctx)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(2)
+	}
+
+	var allFindings []audit.Finding
+	for _, scope := range scopes {
+		findings, err := audit.RunScopedChecks(ctx, scope, nil, checkers, label)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(2)
+		}
+		allFindings = append(allFindings, findings...)
+	}
+
+	if err := audit.OutputWithFilter(format, allFindings, riskLevel, sortBy, start, outputFile); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(2)
+	}
+
+	host := cfg.Host
+	db, dbErr := history.OpenDB()
+	if dbErr == nil {
+		defer db.Close()
+		if diff {
+			_, prev, err := db.LatestScan("aria", host, command)
+			if err == nil && prev != nil {
+				d := history.ComputeDiff(prev, allFindings)
+				fmt.Fprintf(os.Stderr, "\nDiff vs previous scan\n")
+				fmt.Fprintf(os.Stderr, " New:	%d\n", len(d.New))
+				fmt.Fprintf(os.Stderr, " Resolved: %d\n", len(d.Resolved))
+				fmt.Fprintf(os.Stderr, " Ongoing:	%d\n", len(d.Ongoing))
+			}
+		}
+		if !noSave {
+			meta := history.ScanMeta{
+				ID:         fmt.Sprintf("%d", time.Now().UnixNano()),
+				Provider:   "aria",
+				Profile:    host,
+				Command:    command,
+				Region:     host,
+				Timestamp:  time.Now().UTC(),
+				DurationMs: time.Since(start).Milliseconds(),
+			}
+			if err := db.SaveScan(meta, allFindings); err != nil {
+				slog.Warn("failed to save history", "error", err)
+			}
+		}
+	}
+
+	if audit.HasHighRiskFindings(allFindings) {
+		exitCode = 1
+	}
 }
 
 func init() {
