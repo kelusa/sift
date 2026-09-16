@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"sift/audit"
+	"sift/audit/aws/awsreg"
 	"sift/audit/remediation"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -13,7 +14,7 @@ import (
 )
 
 func init() {
-	audit.RegisterAWS(Module, "backup", AuditBackup)
+	awsreg.Register(Module, "backup", AuditBackup)
 }
 
 type backupVaultEntry struct {

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"sift/audit"
+	"sift/audit/aws/awsreg"
 	"sift/audit/remediation"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -14,7 +15,7 @@ import (
 )
 
 func init() {
-	audit.RegisterAWS(Module, "secrets", AuditSecrets)
+	awsreg.Register(Module, "secrets", AuditSecrets)
 }
 
 type secretEntry struct {

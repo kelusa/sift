@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"sift/audit"
+	"sift/audit/aws/awsreg"
 	"sift/audit/remediation"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -16,7 +17,7 @@ import (
 )
 
 func init() {
-	audit.RegisterAWS(Module, "eventbridge", AuditEventBridgeCost)
+	awsreg.Register(Module, "eventbridge", AuditEventBridgeCost)
 }
 
 func AuditEventBridgeCost(ctx context.Context, cfg aws.Config) ([]audit.Finding, error) {

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"sift/audit"
+	"sift/audit/aws/awsreg"
 	"sift/audit/aws/pricing"
 	"sift/audit/remediation"
 
@@ -18,7 +19,7 @@ import (
 )
 
 func init() {
-	audit.RegisterAWS(Module, "dms", AuditDMSCost)
+	awsreg.Register(Module, "dms", AuditDMSCost)
 }
 
 var dmsPrevGenPrefixes = []string{

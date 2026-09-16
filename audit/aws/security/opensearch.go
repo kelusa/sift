@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sift/audit"
+	"sift/audit/aws/awsreg"
 	"sift/audit/remediation"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -11,7 +12,7 @@ import (
 )
 
 func init() {
-	audit.RegisterAWS(Module, "opensearch", AuditOpenSearch)
+	awsreg.Register(Module, "opensearch", AuditOpenSearch)
 }
 
 func AuditOpenSearch(ctx context.Context, cfg aws.Config) ([]audit.Finding, error) {

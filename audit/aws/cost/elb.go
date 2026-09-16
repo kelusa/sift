@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"sift/audit"
+	"sift/audit/aws/awsreg"
 	"sift/audit/aws/pricing"
 	"sift/audit/remediation"
 
@@ -18,7 +19,7 @@ import (
 )
 
 func init() {
-	audit.RegisterAWS(Module, "elb", AuditELBCost)
+	awsreg.Register(Module, "elb", AuditELBCost)
 }
 
 type elbCostEntry struct {

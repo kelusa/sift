@@ -6,6 +6,7 @@ import (
 	"log/slog"
 
 	"sift/audit"
+	"sift/audit/aws/awsreg"
 	"sift/audit/remediation"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -17,7 +18,7 @@ import (
 )
 
 func init() {
-	audit.RegisterAWS(Module, "elb", AuditELB)
+	awsreg.Register(Module, "elb", AuditELB)
 }
 
 var sensitivePortSet = map[int32]string{

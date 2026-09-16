@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"sift/audit"
+	"sift/audit/aws/awsreg"
 	"sift/audit/remediation"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -14,7 +15,7 @@ import (
 )
 
 func init() {
-	audit.RegisterAWS(Module, "s3", AuditS3)
+	awsreg.Register(Module, "s3", AuditS3)
 }
 
 func hasS3DataEvents(ctx context.Context, cfg aws.Config) bool {

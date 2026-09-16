@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"sift/audit"
+	"sift/audit/aws/awsreg"
 	"sift/audit/progress"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -27,7 +28,7 @@ var glueChecks = map[string]func(context.Context, *glue.Client, aws.Config) ([]a
 }
 
 func init() {
-	audit.RegisterAWS(Module, "glue", AuditGlueOps)
+	awsreg.Register(Module, "glue", AuditGlueOps)
 }
 
 func AuditGlueOps(ctx context.Context, cfg aws.Config) ([]audit.Finding, error) {

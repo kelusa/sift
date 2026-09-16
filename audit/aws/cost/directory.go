@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"sift/audit"
+	"sift/audit/aws/awsreg"
 	"sift/audit/aws/pricing"
 	"sift/audit/remediation"
 
@@ -14,7 +15,7 @@ import (
 )
 
 func init() {
-	audit.RegisterAWS(Module, "directory", AuditDirectoryCost)
+	awsreg.Register(Module, "directory", AuditDirectoryCost)
 }
 
 func AuditDirectoryCost(ctx context.Context, cfg aws.Config) ([]audit.Finding, error) {

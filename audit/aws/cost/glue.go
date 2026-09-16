@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"sift/audit"
+	"sift/audit/aws/awsreg"
 	"sift/audit/aws/pricing"
 	"sift/audit/progress"
 	"sift/audit/remediation"
@@ -17,7 +18,7 @@ import (
 )
 
 func init() {
-	audit.RegisterAWS(Module, "glue", AuditGlueCost)
+	awsreg.Register(Module, "glue", AuditGlueCost)
 }
 
 type glueCostJob struct {

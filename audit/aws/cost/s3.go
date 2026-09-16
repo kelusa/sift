@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"sift/audit"
+	"sift/audit/aws/awsreg"
 	"sift/audit/aws/pricing"
 	"sift/audit/remediation"
 
@@ -16,7 +17,7 @@ import (
 )
 
 func init() {
-	audit.RegisterAWS(Module, "s3", AuditS3Cost)
+	awsreg.Register(Module, "s3", AuditS3Cost)
 }
 
 type s3CostBucket struct {

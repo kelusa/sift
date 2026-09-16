@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"sift/audit"
+	"sift/audit/aws/awsreg"
 	"sift/audit/aws/pricing"
 	"sift/audit/remediation"
 
@@ -19,7 +20,7 @@ import (
 var opensearchPrevGen = []string{"m4.", "r4.", "i2.", "t2.", "m3.", "r3."}
 
 func init() {
-	audit.RegisterAWS(Module, "opensearch", AuditOpenSearchCost)
+	awsreg.Register(Module, "opensearch", AuditOpenSearchCost)
 }
 
 func AuditOpenSearchCost(ctx context.Context, cfg aws.Config) ([]audit.Finding, error) {

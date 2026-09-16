@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"sift/audit"
+	"sift/audit/aws/awsreg"
 	"sift/audit/remediation"
 	"strings"
 
@@ -14,7 +15,7 @@ import (
 )
 
 func init() {
-	audit.RegisterAWS(Module, "route53", AuditRoute53)
+	awsreg.Register(Module, "route53", AuditRoute53)
 }
 
 var danglingCNAMESuffixes = []string{

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sift/audit"
+	"sift/audit/aws/awsreg"
 	"sift/audit/remediation"
 	"strings"
 
@@ -13,7 +14,7 @@ import (
 )
 
 func init() {
-	audit.RegisterAWS(Module, "kms", AuditKMS)
+	awsreg.Register(Module, "kms", AuditKMS)
 }
 
 func AuditKMS(ctx context.Context, cfg aws.Config) ([]audit.Finding, error) {

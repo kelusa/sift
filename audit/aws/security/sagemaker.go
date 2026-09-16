@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"sift/audit"
+	"sift/audit/aws/awsreg"
 	"sift/audit/remediation"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -15,7 +16,7 @@ import (
 )
 
 func init() {
-	audit.RegisterAWS(Module, "sagemaker", AuditSagemaker)
+	awsreg.Register(Module, "sagemaker", AuditSagemaker)
 }
 
 type sageMakerNotebook struct {

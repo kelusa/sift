@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sift/audit"
+	"sift/audit/aws/awsreg"
 	"sift/audit/remediation"
 	"strings"
 
@@ -12,7 +13,7 @@ import (
 )
 
 func init() {
-	audit.RegisterAWS(Module, "sns", AuditSNS)
+	awsreg.Register(Module, "sns", AuditSNS)
 }
 
 func AuditSNS(ctx context.Context, cfg aws.Config) ([]audit.Finding, error) {

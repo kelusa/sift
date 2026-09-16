@@ -4,13 +4,10 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"strings"
 	"sync"
 	"time"
 
 	"sift/audit/progress"
-
-	"github.com/aws/aws-sdk-go-v2/aws"
 )
 
 // Checker is a named, provider-neutral audit unit.
@@ -18,20 +15,6 @@ import (
 type Checker struct {
 	Name string
 	Fn   CheckFn
-}
-
-func RunChecks(
-	ctx context.Context,
-	cfg aws.Config,
-	services []string,
-	all []Checker,
-	label string,
-) ([]Finding, error) {
-	// AWS-native entry point: wrap the aws.Config into a provider-neutral
-	// Scope and delegate to the generic orchestrator. AWS callers are
-	// unchanged; other providers call RunScopedChecks directly.
-	scope := Scope{Provider: "aws", ID: cfg.Region, Client: cfg}
-	return RunScopedChecks(ctx, scope, services, all, label)
 }
 
 // RunScopedChecks is the provider-neutral orchestrator. It runs the given
@@ -69,7 +52,7 @@ func RunScopedChecks(
 		start := time.Now()
 		findings, err := checks[0].Fn(subCtx, scope)
 		if err != nil {
-			if isServiceNotAvailable(err) {
+			if scope.SkipError != nil && scope.SkipError(err) {
 				slog.Debug("service not available", "service", checks[0].Name, "error", err)
 				results[0] = []Finding{{
 					Service:   checks[0].Name,
@@ -98,7 +81,7 @@ func RunScopedChecks(
 				start := time.Now()
 				findings, err := fn(subCtx, scope)
 				if err != nil {
-					if isServiceNotAvailable(err) {
+					if scope.SkipError != nil && scope.SkipError(err) {
 						slog.Debug("service not available", "service", name, "error", err)
 						results[i] = []Finding{{
 							Service:   name,
@@ -135,25 +118,4 @@ func RunScopedChecks(
 		out[i].ComputeID()
 	}
 	return out, nil
-}
-
-func isServiceNotAvailable(err error) bool {
-	msg := err.Error()
-	indicators := []string{
-		"ResourceNotFoundException",
-		"SubscriptionRequiredException",
-		"OptInRequired",
-		"InvalidClientTokenId",
-		"UnrecognizedClientException",
-		"NotSignedUp",
-		"is not subscribed",
-		"is not authorized to use this service",
-		"Namespace default not found",
-	}
-	for _, ind := range indicators {
-		if strings.Contains(msg, ind) {
-			return true
-		}
-	}
-	return false
 }

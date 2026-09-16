@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sift/audit"
+	"sift/audit/aws/awsreg"
 	"sift/audit/remediation"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -11,7 +12,7 @@ import (
 )
 
 func init() {
-	audit.RegisterAWS(Module, "timestream", AuditTimestream)
+	awsreg.Register(Module, "timestream", AuditTimestream)
 }
 
 func AuditTimestream(ctx context.Context, cfg aws.Config) ([]audit.Finding, error) {

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"sift/audit"
+	"sift/audit/aws/awsreg"
 	"sift/audit/aws/pricing"
 	"sift/audit/remediation"
 
@@ -14,7 +15,7 @@ import (
 )
 
 func init() {
-	audit.RegisterAWS(Module, "dynamodb", AuditDynamoDBCost)
+	awsreg.Register(Module, "dynamodb", AuditDynamoDBCost)
 }
 
 type dynamoDBCostTable struct {

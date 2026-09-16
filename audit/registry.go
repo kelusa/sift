@@ -9,16 +9,10 @@ var registry = map[string][]Checker{}
 func regKey(provider, module string) string { return provider + ":" + module }
 
 // Register adds a provider-neutral checker under the given provider+module.
-// Non-AWS providers (e.g. Aria) call this directly with a CheckFn.
+// AWS checkers register via awsreg.Register (which adapts an aws.Config-based
+// checker and calls this); Non-AWS providers (e.g. Aria) call this directly.
 func Register(provider, module string, c Checker) {
 	registry[regKey(provider, module)] = append(registry[regKey(provider, module)], c)
-}
-
-// RegisterAWS registers an AWS-native checker (one that takes an aws.Config)
-// under the "aws" provider and given module, adapting it to the provider-neutral CheckFn.
-// Existing AWS service files call this from their init() so their function bodies stay unchanged.
-func RegisterAWS(module, name string, fn AWSCheckFn) {
-	Register("aws", module, Checker{Name: name, Fn: wrapAWS(fn)})
 }
 
 func CheckersFor(provider, module string) []Checker {

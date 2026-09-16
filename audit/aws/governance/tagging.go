@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"sift/audit"
+	"sift/audit/aws/awsreg"
 	"sift/audit/remediation"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -52,7 +53,7 @@ type taggingConfig struct {
 }
 
 func init() {
-	audit.RegisterAWS(Module, "tagging", AuditTagging)
+	awsreg.Register(Module, "tagging", AuditTagging)
 }
 
 func loadTaggingConfig() (taggingConfig, error) {
@@ -303,7 +304,7 @@ func Audit(ctx context.Context, cfg aws.Config, services []string) ([]audit.Find
 		}
 		checkers = filtered
 	}
-	return audit.RunChecks(ctx, cfg, nil, checkers, "Auditing governance")
+	return awsreg.RunChecks(ctx, cfg, nil, checkers, "Auditing governance")
 }
 
 func arnToService(arn string) string {

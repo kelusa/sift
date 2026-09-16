@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sift/audit"
+	"sift/audit/aws/awsreg"
 	"sift/audit/remediation"
 	"strings"
 
@@ -13,7 +14,7 @@ import (
 )
 
 func init() {
-	audit.RegisterAWS(Module, "eventbridge", AuditEventBridge)
+	awsreg.Register(Module, "eventbridge", AuditEventBridge)
 }
 
 func AuditEventBridge(ctx context.Context, cfg aws.Config) ([]audit.Finding, error) {

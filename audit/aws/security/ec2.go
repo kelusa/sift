@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"sift/audit"
+	"sift/audit/aws/awsreg"
 	"sift/audit/progress"
 	"sift/audit/remediation"
 
@@ -14,7 +15,7 @@ import (
 )
 
 func init() {
-	audit.RegisterAWS(Module, "ec2", AuditEC2)
+	awsreg.Register(Module, "ec2", AuditEC2)
 }
 
 type ec2Instance struct {

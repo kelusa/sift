@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"sift/audit"
+	"sift/audit/aws/awsreg"
 	"sift/audit/aws/pricing"
 	"sift/audit/remediation"
 
@@ -19,7 +20,7 @@ import (
 var elasticachePrevGen = []string{"cache.r4.", "cache.m4.", "cache.t2.", "cache.r3.", "cache.m3."}
 
 func init() {
-	audit.RegisterAWS(Module, "elasticache", AuditElastiCacheCost)
+	awsreg.Register(Module, "elasticache", AuditElastiCacheCost)
 }
 
 func AuditElastiCacheCost(ctx context.Context, cfg aws.Config) ([]audit.Finding, error) {

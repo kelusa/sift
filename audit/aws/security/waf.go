@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sift/audit"
+	"sift/audit/aws/awsreg"
 	"sift/audit/remediation"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -12,7 +13,7 @@ import (
 )
 
 func init() {
-	audit.RegisterAWS(Module, "waf", AuditWAF)
+	awsreg.Register(Module, "waf", AuditWAF)
 }
 
 func AuditWAF(ctx context.Context, cfg aws.Config) ([]audit.Finding, error) {

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"sift/audit"
+	"sift/audit/aws/awsreg"
 	"sift/audit/aws/pricing"
 	"sift/audit/remediation"
 
@@ -18,7 +19,7 @@ import (
 )
 
 func init() {
-	audit.RegisterAWS(Module, "docdb", AuditDocDBCost)
+	awsreg.Register(Module, "docdb", AuditDocDBCost)
 }
 
 func AuditDocDBCost(ctx context.Context, cfg aws.Config) ([]audit.Finding, error) {

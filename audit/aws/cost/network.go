@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"sift/audit"
+	"sift/audit/aws/awsreg"
 	"sift/audit/aws/pricing"
 	"sift/audit/remediation"
 
@@ -17,7 +18,7 @@ import (
 )
 
 func init() {
-	audit.RegisterAWS(Module, "network", AuditNetworkCost)
+	awsreg.Register(Module, "network", AuditNetworkCost)
 }
 
 type natGatewayEntry struct {

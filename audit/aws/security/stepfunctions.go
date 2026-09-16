@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"sift/audit"
+	"sift/audit/aws/awsreg"
 	"sift/audit/remediation"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -13,7 +14,7 @@ import (
 )
 
 func init() {
-	audit.RegisterAWS(Module, "stepfunctions", AuditStepFunctions)
+	awsreg.Register(Module, "stepfunctions", AuditStepFunctions)
 }
 
 func AuditStepFunctions(ctx context.Context, cfg aws.Config) ([]audit.Finding, error) {

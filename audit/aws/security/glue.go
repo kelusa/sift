@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"sift/audit"
+	"sift/audit/aws/awsreg"
 	"sift/audit/remediation"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -14,7 +15,7 @@ import (
 )
 
 func init() {
-	audit.RegisterAWS(Module, "glue", AuditGlue)
+	awsreg.Register(Module, "glue", AuditGlue)
 }
 
 func AuditGlue(ctx context.Context, cfg aws.Config) ([]audit.Finding, error) {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sift/audit"
+	"sift/audit/aws/awsreg"
 	"sift/audit/aws/pricing"
 	"sift/audit/remediation"
 
@@ -13,7 +14,7 @@ import (
 )
 
 func init() {
-	audit.RegisterAWS(Module, "sagemaker", AuditSagemakerCost)
+	awsreg.Register(Module, "sagemaker", AuditSagemakerCost)
 }
 
 type sagemakerCostEntry struct {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sift/audit"
+	"sift/audit/aws/awsreg"
 	"sift/audit/progress"
 	"sift/audit/remediation"
 
@@ -12,7 +13,7 @@ import (
 )
 
 func init() {
-	audit.RegisterAWS(Module, "redshift", AuditRedshift)
+	awsreg.Register(Module, "redshift", AuditRedshift)
 }
 
 func AuditRedshift(ctx context.Context, cfg aws.Config) ([]audit.Finding, error) {

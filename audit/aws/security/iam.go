@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"sift/audit"
+	"sift/audit/aws/awsreg"
 	"sift/audit/remediation"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -18,7 +19,7 @@ import (
 )
 
 func init() {
-	audit.RegisterAWS(Module, "iam", AuditIAMHygiene)
+	awsreg.Register(Module, "iam", AuditIAMHygiene)
 }
 
 type IAMFinding struct {

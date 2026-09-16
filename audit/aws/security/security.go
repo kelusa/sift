@@ -3,6 +3,7 @@ package security
 import (
 	"context"
 	"sift/audit"
+	"sift/audit/aws/awsreg"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 )
@@ -26,5 +27,5 @@ func statusFromRisk(risk string) string {
 }
 
 func Audit(ctx context.Context, cfg aws.Config, services []string) ([]audit.Finding, error) {
-	return audit.RunChecks(ctx, cfg, services, audit.CheckersFor("aws", Module), "Running security audit")
+	return awsreg.RunChecks(ctx, cfg, services, audit.CheckersFor("aws", Module), "Running security audit")
 }
