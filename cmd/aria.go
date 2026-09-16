@@ -13,6 +13,9 @@ import (
 	"sift/audit/history"
 	"sift/audit/progress"
 
+	// Register Aria checkers via their init().
+	_ "sift/audit/aria/governance"
+
 	"github.com/spf13/cobra"
 )
 
@@ -242,5 +245,6 @@ func init() {
 	})
 
 	ariaCmd.AddCommand(ariaListCmd)
+	ariaCmd.AddCommand(ariaGovernanceCmd)
 	rootCmd.AddCommand(ariaCmd)
 }
