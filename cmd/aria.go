@@ -8,6 +8,7 @@ import (
 
 	"sift/audit"
 	"sift/audit/aria"
+	"sift/audit/aria/client"
 
 	"github.com/spf13/cobra"
 )
@@ -31,12 +32,12 @@ var ariaCmd = &cobra.Command{
 var ariaListCmd = &cobra.Command{
 	Use:   "list <resource>",
 	Short: "List Aria Automation resources with metadata",
-	Long:  "List Aria Automation resources.\n\nAvailable resources:\n deployments\n",
+	Long:  "List Aria Automation resources.\n\nAvailable resources:\n deployments\n projects\n",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		resource := args[0]
-		if resource != "deployments" {
-			fmt.Fprintf(os.Stderr, "Error: unknown resource %q (available: deployments)\n", resource)
+		if resource != "deployments" && resource != "projects" {
+			fmt.Fprintf(os.Stderr, "Error: unknown resource %q (available: deployments, projects)\n", resource)
 			os.Exit(2)
 		}
 
@@ -61,28 +62,16 @@ var ariaListCmd = &cobra.Command{
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 		defer cancel()
 
-		deployments, err := c.ListDeployments(ctx)
+		var resources []audit.Resource
+		switch resource {
+		case "deployments":
+			resources, err = listAriaDeployments(ctx, c)
+		case "projects":
+			resources, err = listAriaProjects(ctx, c)
+		}
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 			os.Exit(2)
-		}
-
-		resources := make([]audit.Resource, 0, len(deployments))
-		for _, d := range deployments {
-			resources = append(resources, audit.Resource{
-				Service:    "deployments",
-				Type:       "deployment",
-				ResourceID: firstNonEmpty(d.Name, d.ID),
-				Properties: map[string]string{
-					"id":        d.ID,
-					"project":   d.ProjectID,
-					"status":    d.Status,
-					"owned_by":  d.OwnedBy,
-					"blueprint": d.BlueprintID,
-					"catalog":   d.CatalogItemID,
-					"created":   d.CreatedAt,
-				},
-			})
 		}
 
 		if err := audit.OutputResources(format, resources, start, outputFile); err != nil {
@@ -90,6 +79,51 @@ var ariaListCmd = &cobra.Command{
 			os.Exit(2)
 		}
 	},
+}
+
+func listAriaDeployments(ctx context.Context, c *client.Client) ([]audit.Resource, error) {
+	deployments, err := c.ListDeployments(ctx)
+	if err != nil {
+		return nil, err
+	}
+	resources := make([]audit.Resource, 0, len(deployments))
+	for _, d := range deployments {
+		resources = append(resources, audit.Resource{
+			Service:    "deployments",
+			Type:       "deployment",
+			ResourceID: firstNonEmpty(d.Name, d.ID),
+			Properties: map[string]string{
+				"id":        d.ID,
+				"project":   d.ProjectID,
+				"status":    d.Status,
+				"owned_by":  d.OwnedBy,
+				"blueprint": d.BlueprintID,
+				"catalog":   d.CatalogItemID,
+				"created":   d.CreatedAt,
+			},
+		})
+	}
+	return resources, nil
+}
+
+func listAriaProjects(ctx context.Context, c *client.Client) ([]audit.Resource, error) {
+	projects, err := c.ListProjects(ctx)
+	if err != nil {
+		return nil, err
+	}
+	resources := make([]audit.Resource, 0, len(projects))
+	for _, p := range projects {
+		resources = append(resources, audit.Resource{
+			Service:    "projects",
+			Type:       "project",
+			ResourceID: firstNonEmpty(p.Name, p.ID),
+			Properties: map[string]string{
+				"id":     p.ID,
+				"org_id": firstNonEmpty(p.OrgID, p.OrganizationID),
+			},
+		})
+	}
+	return resources, nil
 }
 
 func firstNonEmpty(vals ...string) string {
@@ -111,6 +145,11 @@ func init() {
 		{Key: "owned_by", Header: "OWNER"},
 		{Key: "blueprint", Header: "BLUEPRINT"},
 		{Key: "catalog", Header: "CATALOG"},
+	})
+
+	audit.RegisterColumns("projects/project", []audit.ResourceColumn{
+		{Key: "id", Header: "ID"},
+		{Key: "org_id", Header: "ORG"},
 	})
 
 	ariaCmd.AddCommand(ariaListCmd)
