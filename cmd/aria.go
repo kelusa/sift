@@ -158,6 +158,11 @@ var ariaGovernanceCmd = &cobra.Command{
 func runAriaAudit(command string, checkers []audit.Checker, label string) {
 	start := time.Now()
 
+	if err := resolveFormat(); err != nil {
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		os.Exit(2)
+	}
+
 	cfg, err := aria.LoadConfig(ariaHost, ariaInsecure)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
