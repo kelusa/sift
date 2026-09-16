@@ -38,12 +38,12 @@ var ariaCmd = &cobra.Command{
 var ariaListCmd = &cobra.Command{
 	Use:   "list <resource>",
 	Short: "List Aria Automation resources with metadata",
-	Long:  "List Aria Automation resources.\n\nAvailable resources:\n deployments\n projects\n",
+	Long:  "List Aria Automation resources.\n\nAvailable resources:\n deployments\n projects\n resources\n",
 	Args:  cobra.ExactArgs(1),
 	Run: func(cmd *cobra.Command, args []string) {
 		resource := args[0]
-		if resource != "deployments" && resource != "projects" {
-			fmt.Fprintf(os.Stderr, "Error: unknown resource %q (available: deployments, projects)\n", resource)
+		if resource != "deployments" && resource != "projects" && resource != "resources" {
+			fmt.Fprintf(os.Stderr, "Error: unknown resource %q (available: deployments, projects, resources)\n", resource)
 			os.Exit(2)
 		}
 
@@ -74,6 +74,8 @@ var ariaListCmd = &cobra.Command{
 			resources, err = listAriaDeployments(ctx, c)
 		case "projects":
 			resources, err = listAriaProjects(ctx, c)
+		case "resources":
+			resources, err = listAriaResources(ctx, c)
 		}
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
@@ -126,6 +128,32 @@ func listAriaProjects(ctx context.Context, c *client.Client) ([]audit.Resource, 
 			Properties: map[string]string{
 				"id":     p.ID,
 				"org_id": firstNonEmpty(p.OrgID, p.OrganizationID),
+			},
+		})
+	}
+	return resources, nil
+}
+
+func listAriaResources(ctx context.Context, c *client.Client) ([]audit.Resource, error) {
+	items, err := c.ListResources(ctx)
+	if err != nil {
+		return nil, err
+	}
+	resources := make([]audit.Resource, 0, len(items))
+	for _, r := range items {
+		resources = append(resources, audit.Resource{
+			Service:    "resources",
+			Type:       "resource",
+			ResourceID: firstNonEmpty(r.Name, r.ID),
+			Properties: map[string]string{
+				"id":          r.ID,
+				"type":        r.Type,
+				"state":       r.State,
+				"sync":        r.SyncStatus,
+				"environment": r.Prop("environment"),
+				"site":        r.Prop("site"),
+				"size":        r.Prop("size"),
+				"deployment":  r.DeploymentID,
 			},
 		})
 	}
@@ -247,6 +275,15 @@ func init() {
 	audit.RegisterColumns("projects/project", []audit.ResourceColumn{
 		{Key: "id", Header: "ID"},
 		{Key: "org_id", Header: "ORG"},
+	})
+
+	audit.RegisterColumns("resources/resource", []audit.ResourceColumn{
+		{Key: "type", Header: "TYPE"},
+		{Key: "state", Header: "STATE"},
+		{Key: "sync", Header: "SYNC"},
+		{Key: "environment", Header: "ENV"},
+		{Key: "site", Header: "SITE"},
+		{Key: "size", Header: "SIZE"},
 	})
 
 	ariaCmd.AddCommand(ariaListCmd)
