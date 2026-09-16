@@ -27,6 +27,23 @@ func RunChecks(
 	all []Checker,
 	label string,
 ) ([]Finding, error) {
+	// AWS-native entry point: wrap the aws.Config into a provider-neutral
+	// Scope and delegate to the generic orchestrator. AWS callers are
+	// unchanged; other providers call RunScopedChecks directly.
+	scope := Scope{Provider: "aws", ID: cfg.Region, Client: cfg}
+	return RunScopedChecks(ctx, scope, services, all, label)
+}
+
+// RunScopedChecks is the provider-neutral orchestrator. It runs the given
+// checkers against a single Scope (an AWS region, an Aria host, etc.),
+// filtering by service name when services is non-empty.
+func RunScopedChecks(
+	ctx context.Context,
+	scope Scope,
+	services []string,
+	all []Checker,
+	label string,
+) ([]Finding, error) {
 	checks := all
 	if len(services) > 0 {
 		svcSet := make(map[string]bool, len(services))
@@ -40,15 +57,9 @@ func RunChecks(
 			}
 		}
 	}
-
 	if len(checks) == 0 {
 		return nil, nil
 	}
-
-	// In Phase 1 RunChecks still receives an aws.Config directly;
-	// wrap it into a provider-neutral Scope so checkers see the
-	// unified CheckFn signature.
-	scope := Scope{Provider: "aws", ID: cfg.Region, Client: cfg}
 
 	results := make([][]Finding, len(checks))
 
