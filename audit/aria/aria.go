@@ -100,7 +100,7 @@ func NewClient(cfg Config) (*client.Client, error) {
 }
 
 // ClientFrom recovers the *client.Client from an Aria scope. Checkers call this
-// at the top of their body (mirrors audit.AWSConfig for the AWS provider).
+// at the top of their body (mirrors awsreg.AWSConfig for the AWS provider).
 // Kept in this package rather than package audit to avoid an import cycle.
 func ClientFrom(s audit.Scope) *client.Client {
 	return s.Client.(*client.Client)
