@@ -24,7 +24,7 @@ var costCmd = &cobra.Command{
 	Use:   "cost",
 	Short: "Detect cost waste across AWS resources",
 	Run: func(cmd *cobra.Command, args []string) {
-		runAudit("cost", costServices, audit.ValidServices(cost.Module), cost.Audit)
+		runAudit("cost", costServices, audit.ValidServices("aws", cost.Module), cost.Audit)
 
 		if groupBy != "" {
 			printCostGroupBy(groupBy)
@@ -155,7 +155,7 @@ func loadCostTags() []string {
 
 func init() {
 	costCmd.Flags().
-		StringVar(&costServices, "service", "", serviceUsage(audit.ValidServices(cost.Module)))
+		StringVar(&costServices, "service", "", serviceUsage(audit.ValidServices("aws", cost.Module)))
 	costCmd.Flags().
 		StringVar(&groupBy, "group-by", "", "Group cost by tag key (e.g., Project, Team)")
 	awsCmd.AddCommand(costCmd)

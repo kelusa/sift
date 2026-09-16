@@ -76,8 +76,8 @@ func Discover(ctx context.Context, cfg aws.Config) ([]ServiceInfo, error) {
 		return nil, fmt.Errorf("get discovered resource counts: %w", err)
 	}
 
-	securityServices := audit.ValidServices("security")
-	costServices := audit.ValidServices("cost")
+	securityServices := audit.ValidServices("aws", "security")
+	costServices := audit.ValidServices("aws", "cost")
 	listServices := make(map[string]bool)
 	for _, s := range list.Services() {
 		listServices[s] = true

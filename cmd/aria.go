@@ -145,7 +145,7 @@ var ariaGovernanceCmd = &cobra.Command{
 	Use:   "governance",
 	Short: "Audit Aria Automation governance compliance",
 	Run: func(cmd *cobra.Command, args []string) {
-		runAriaAudit("governance", audit.CheckersFor(aria.ModuleGovernance), "Auditing Aria Governance")
+		runAriaAudit("governance", audit.CheckersFor("aria", aria.ModuleGovernance), "Auditing Aria Governance")
 		if exitCode != 0 {
 			os.Exit(exitCode)
 		}

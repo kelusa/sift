@@ -12,7 +12,7 @@ import (
 )
 
 func init() {
-	audit.Register(aria.ModuleGovernance, audit.Checker{
+	audit.Register("aria", aria.ModuleGovernance, audit.Checker{
 		Name: "deployments",
 		Fn:   auditDeployments,
 	})

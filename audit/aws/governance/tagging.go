@@ -291,7 +291,7 @@ func AuditTagging(ctx context.Context, cfg aws.Config) ([]audit.Finding, error) 
 func Audit(ctx context.Context, cfg aws.Config, services []string) ([]audit.Finding, error) {
 	ctx = audit.WithServices(ctx, services)
 	checks := audit.GetChecks(ctx)
-	checkers := audit.CheckersFor(Module)
+	checkers := audit.CheckersFor("aws", Module)
 	if len(checks) > 0 {
 		var filtered []audit.Checker
 		for _, c := range checkers {

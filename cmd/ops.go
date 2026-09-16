@@ -23,7 +23,7 @@ var opsCmd = &cobra.Command{
 			checksCtxOverride = strings.Split(opsCheck, ",")
 		}
 
-		runAudit("ops", opsServices, audit.ValidServices(ops.Module), ops.Audit)
+		runAudit("ops", opsServices, audit.ValidServices("aws", ops.Module), ops.Audit)
 		if exitCode != 0 {
 			os.Exit(exitCode)
 		}
@@ -32,7 +32,7 @@ var opsCmd = &cobra.Command{
 
 func init() {
 	opsCmd.Flags().
-		StringVar(&opsServices, "service", "", serviceUsage(audit.ValidServices(ops.Module)))
+		StringVar(&opsServices, "service", "", serviceUsage(audit.ValidServices("aws", ops.Module)))
 	opsCmd.Flags().StringVar(&opsCheck, "check", "", "Comma-separated checks within a service")
 	awsCmd.AddCommand(opsCmd)
 }

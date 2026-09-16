@@ -25,5 +25,5 @@ var PrevGenPrefixes = []string{
 }
 
 func Audit(ctx context.Context, cfg aws.Config, services []string) ([]audit.Finding, error) {
-	return audit.RunChecks(ctx, cfg, services, audit.CheckersFor(Module), "Auditing cost waste")
+	return audit.RunChecks(ctx, cfg, services, audit.CheckersFor("aws", Module), "Auditing cost waste")
 }

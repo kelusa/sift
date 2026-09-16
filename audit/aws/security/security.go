@@ -26,5 +26,5 @@ func statusFromRisk(risk string) string {
 }
 
 func Audit(ctx context.Context, cfg aws.Config, services []string) ([]audit.Finding, error) {
-	return audit.RunChecks(ctx, cfg, services, audit.CheckersFor(Module), "Running security audit")
+	return audit.RunChecks(ctx, cfg, services, audit.CheckersFor("aws", Module), "Running security audit")
 }

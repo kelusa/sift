@@ -11,5 +11,5 @@ import (
 const Module = "ops"
 
 func Audit(ctx context.Context, cfg aws.Config, services []string) ([]audit.Finding, error) {
-	return audit.RunChecks(ctx, cfg, services, audit.CheckersFor(Module), "Auditing ops risks")
+	return audit.RunChecks(ctx, cfg, services, audit.CheckersFor("aws", Module), "Auditing ops risks")
 }
