@@ -24,6 +24,7 @@ import (
 const (
 	ModuleSecurity   = "security"
 	ModuleGovernance = "governance"
+	ModuleOps        = "ops"
 )
 
 // TokenEnvVar is the environment variable holding the bearer access token.

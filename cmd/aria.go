@@ -15,6 +15,7 @@ import (
 
 	// Register Aria checkers via their init().
 	_ "sift/audit/aria/governance"
+	_ "sift/audit/aria/ops"
 
 	"github.com/spf13/cobra"
 )
@@ -180,6 +181,18 @@ var ariaGovernanceCmd = &cobra.Command{
 	},
 }
 
+var ariaOpsCmd = &cobra.Command{
+	Use:   "ops",
+	Short: "Audit Aria Automation operational health",
+	Long:  "Audit Aria Automation operational health: flags deployment resource that are not in an OK state or are out of sync with Aria.",
+	Run: func(cmd *cobra.Command, args []string) {
+		runAriaAudit("ops", audit.CheckersFor("aria", aria.ModuleOps), "Auditing Aria Ops")
+		if exitCode != 0 {
+			os.Exit(exitCode)
+		}
+	},
+}
+
 // runAriaAudit builds an Aria scope, runs the given checkers via the neutral
 // orchestrator, then outputs and (unless --no-save) persists findings tagged
 // with provider="aria" and the host as the account identity.
@@ -288,5 +301,6 @@ func init() {
 
 	ariaCmd.AddCommand(ariaListCmd)
 	ariaCmd.AddCommand(ariaGovernanceCmd)
+	ariaCmd.AddCommand(ariaOpsCmd)
 	rootCmd.AddCommand(ariaCmd)
 }
