@@ -5,34 +5,57 @@ This guide explains how to add a new audit service to sift.
 ## Architecture
 
 ```bash
-audit/provider.go   — Provider-neutral Scope/Provider abstraction + RegisterAWS adapter
-audit/registry.go   — Self-registration of checkers per module (security, cost, ops)
-audit/runner.go     — Generic parallel orchestrator (RunChecks)
+audit/provider.go   — Provider-neutral Scope/Provider abstraction (no provider SDKs)
+audit/registry.go   — Provider-aware self-registration of checkers (keyed by provider:module)
+audit/runner.go     — Generic parallel orchestrator (RunScopedChecks)
 audit/process.go    — Concurrent item processor (ProcessAll, ProcessAllMulti, FetchAll)
+
+audit/aws/awsreg/   — AWS bridge: adapts aws.Config checkers to the neutral core
 ```
 
-Each module (`security`, `cost`, `ops`) has a registry. Services register themselves via `init()`, so adding a new service requires **one file with zero edits elsewhere**.
+Each provider+module pair (e.g. `aws:security`, `aws:cost`, `aria:governance`) has its own
+registry bucket. Services register themselves via `init()`, so adding a new service requires
+**one file with zero edits elsewhere**.
 
-`audit/provider.go` defines the provider-neutral `Scope`/`Provider` abstraction and the internal `CheckFn(ctx, audit.Scope)` signature the runner consumes. AWS services register with `audit.RegisterAWS(Module, "<name>", <Fn>)`, which adapts an AWS checker (`func(ctx, aws.Config) ([]audit.Finding, error)`) to that internal signature. Non-AWS providers register with the plain `audit.Register` using a `CheckFn(ctx, audit.Scope)` directly.
+`audit/provider.go` defines the provider-neutral `Scope`/`Provider` abstraction and the
+`CheckFn(ctx, audit.Scope)` signature the runner consumes. **`package audit` has no dependency
+on any provider SDK.**
+
+- **AWS** checkers keep their native `func(ctx, aws.Config) ([]audit.Finding, error)` shape and
+  register with `awsreg.Register(Module, "<name>", <Fn>)` (from `sift/audit/aws/awsreg`). The
+  bridge adapts them to the neutral `CheckFn` and recovers the `aws.Config` from the scope via
+  `awsreg.Config(scope)`. AWS module `Audit` funcs orchestrate via `awsreg.RunChecks(ctx, cfg, ...)`.
+- **Non-AWS providers** (e.g. Aria) register with the plain `audit.Register(provider, module, Checker{...})`
+  using a `CheckFn(ctx, audit.Scope)` directly, recover their client via a provider accessor
+  (e.g. `aria.ClientFrom(scope)`), and orchestrate via `audit.RunScopedChecks(ctx, scope, ...)`.
 
 ### Package layout
 
 ```bash
 audit/
-├── runner.go          # RunChecks — generic orchestrator
-├── provider.go        # Scope/Provider abstraction + RegisterAWS adapter
-├── registry.go        # Register/CheckersFor/ValidServices
+├── runner.go          # RunScopedChecks — provider-neutral orchestrator
+├── provider.go        # Scope{Provider,ID,Client,SkipError} / Provider / CheckFn (no SDKs)
+├── registry.go        # Register/CheckersFor/ValidServices (provider-aware: provider:module keys)
 ├── process.go         # ProcessAll, ProcessAllMulti, FetchAll
 ├── finding.go         # Finding struct
-├── security/          # Security audit checkers
-├── cost/              # Cost audit checkers
-├── ops/               # Ops audit checkers
-└── triage/            # Triage investigation (own package, consumes security helpers)
+├── aws/               # AWS provider
+│   ├── awsreg/        # AWS↔core bridge: Register, RunChecks, Config, CheckFn
+│   ├── remediations.json
+│   ├── security/      # Security audit checkers
+│   ├── cost/          # Cost audit checkers
+│   ├── ops/           # Ops audit checkers
+│   ├── governance/    # Governance checkers
+│   ├── list/          # Inventory listers
+│   └── triage/        # Triage investigation
+└── aria/              # Aria Automation provider
+    ├── client/        # REST client + typed models
+    ├── governance/    # Governance checkers
+    └── ops/           # Operational-health checkers
 ```
 
 ## Adding a Security Check
 
-Create `audit/security/<service>.go`:
+Create `audit/aws/security/<service>.go`:
 
 ```go
 package security
@@ -41,6 +64,7 @@ import (
     "context"
     "fmt"
     "sift/audit"
+    "sift/audit/aws/awsreg"
     "sift/audit/remediation"
 
     "github.com/aws/aws-sdk-go-v2/aws"
@@ -48,7 +72,7 @@ import (
 )
 
 func init() {
-    audit.RegisterAWS(Module, "sqs", AuditSQS)
+    awsreg.Register(Module, "sqs", AuditSQS)
 }
 
 func AuditSQS(ctx context.Context, cfg aws.Config) ([]audit.Finding, error) {
@@ -135,7 +159,7 @@ That's it. The service automatically appears in `sift aws security --service sqs
 
 ## Adding a Cost Check
 
-Same pattern in `audit/cost/<service>.go`:
+Same pattern in `audit/aws/cost/<service>.go`:
 
 ```go
 package cost
@@ -143,12 +167,13 @@ package cost
 import (
     "context"
     "sift/audit"
+    "sift/audit/aws/awsreg"
 
     "github.com/aws/aws-sdk-go-v2/aws"
 )
 
 func init() {
-    audit.RegisterAWS(Module, "sqs", AuditSQSCost)
+    awsreg.Register(Module, "sqs", AuditSQSCost)
 }
 
 func AuditSQSCost(ctx context.Context, cfg aws.Config) ([]audit.Finding, error) {
@@ -202,11 +227,11 @@ notebooks := audit.FetchAll(ctx, names, "Describing notebooks", func(ctx context
 
 ## Adding an Ops Check
 
-Register in `audit/ops/`:
+Register in `audit/aws/ops/`:
 
 ```go
 func init() {
-    audit.RegisterAWS(ops.Module, "myservice", AuditMyServiceOps)
+    awsreg.Register(ops.Module, "myservice", AuditMyServiceOps)
 }
 ```
 
@@ -228,7 +253,7 @@ Some AWS resources don't expose instance types directly (e.g., EKS nodegroups us
 2. **Launch template** — describe the launch template version and read `LaunchTemplateData.InstanceType`
 3. **Running instances** — describe the ASG and read `InstanceType` from a running instance
 
-Only fall through to the next step if the previous one returns empty. See `audit/cost/eks.go` for the reference implementation.
+Only fall through to the next step if the previous one returns empty. See `audit/aws/cost/eks.go` for the reference implementation.
 
 ## Adding a List Command
 
@@ -238,14 +263,14 @@ The `list` module is **architecturally different** from security/cost/ops:
 |--|----------------------|------|
 | Registration | Self-registers via `init()` | Manually wired in `cmd/list.go` |
 | Return type | `[]audit.Finding` | `[]audit.Resource` |
-| Orchestration | `audit.RunChecks` + registry | Direct function calls |
+| Orchestration | `awsreg.RunChecks` + registry | Direct function calls |
 | Output | Findings table (risk, status) | Resource table (properties) |
 
 List is **inventory**, not audit. It doesn't emit pass/fail findings or risk levels — it shows resources with metadata.
 
 ### Adding a new list subcommand
 
-1. Create `audit/list/<service>.go`:
+1. Create `audit/aws/list/<service>.go`:
 
 ```go
 package list
@@ -281,8 +306,8 @@ No self-registration, no remediation, no ProcessAll helpers needed.
 
 ## Checklist
 
-1. Create one file in the appropriate `audit/<module>/` directory
-2. Add `func init()` with `audit.RegisterAWS()`
+1. Create one file in the appropriate `audit/aws/<module>/` directory
+2. Add `func init()` with `awsreg.Register(Module, "<name>", <Fn>)` (import `sift/audit/aws/awsreg`)
 3. Implement the `func(context.Context, aws.Config) ([]audit.Finding, error)` signature
 4. Use `ProcessAll`, `ProcessAllMulti`, or `FetchAll` for the processing loop
 5. Add remediation via `remediation.Recommend()` for non-MINIMAL findings
@@ -292,6 +317,38 @@ No self-registration, no remediation, no ProcessAll helpers needed.
 9. Build and test: `go build ./... && go test ./...`
 
 No changes needed in `cmd/`, no service maps to update, no orchestrator edits.
+
+## Adding a Non-AWS Provider Check
+
+Providers other than AWS (e.g. Aria Automation) don't use the `awsreg` bridge. They implement
+`audit.Provider` (yielding `Scope`s), register checkers with the neutral `audit.Register`, and
+recover their client from the scope directly. Example (Aria):
+
+```go
+package governance
+
+import (
+    "context"
+    "sift/audit"
+    "sift/audit/aria"
+)
+
+func init() {
+    audit.Register("aria", aria.ModuleGovernance, audit.Checker{
+        Name: "deployments",
+        Fn:   auditDeployments,
+    })
+}
+
+func auditDeployments(ctx context.Context, scope audit.Scope) ([]audit.Finding, error) {
+    c := aria.ClientFrom(scope) // recover the provider client from the scope
+    // ... fetch via c, build []audit.Finding ...
+}
+```
+
+The command layer runs these via `audit.RunScopedChecks(ctx, scope, services, checkers, label)`
+for each scope the provider yields, then blank-imports the checker package so its `init()` runs.
+See `cmd/aria.go` for the reference wiring.
 
 ## Testing
 

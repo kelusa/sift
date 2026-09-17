@@ -265,6 +265,57 @@ Create `~/.sift/tagging.json` to define your tagging policy:
 | Ownership | LOW | Tags identifying technical and business owners |
 | Conditional | HIGH | Tags required only under certain conditions (e.g., Backup_Plan in production) |
 
+## VMware Aria Automation
+
+Sift also audits on-prem VMware Aria Automation (8.x). Aria commands live under the `aria`
+provider group:
+
+```bash
+sift aria <command> [--host https://aria.example.com] [--insecure]
+```
+
+### Authentication
+
+Aria commands authenticate with a bearer token supplied via the `SIFT_ARIA_TOKEN` environment
+variable (obtained from an authenticated browser session — the token is never passed on the
+command line or persisted to config). It can also be placed in a `.env` file in the working
+directory:
+
+```bash
+SIFT_ARIA_TOKEN=<bearer-token>
+```
+
+The host comes from `--host` or the `aria` section of `~/.sift/providers.json`:
+
+```json
+{
+  "aria": {
+    "host": "https://aria.example.com",
+    "insecure": false
+  }
+}
+```
+
+Use `--insecure` to skip TLS verification for appliances with self-signed certificates.
+
+### Commands
+
+```bash
+# Inventory: list deployments, projects, or deployment resources
+sift aria list deployments
+sift aria list projects
+sift aria list resources
+
+# Governance: deployment provenance (catalog/blueprint source) + ownership
+sift aria governance
+
+# Operational health: flag resources not in an OK state or out of sync
+sift aria ops
+```
+
+Aria findings flow into the same cross-provider `history`, `report`, and `ai` commands. Filter
+them with `--provider aria` and `--account <host>`.
+
 ## Estimated cost
 
 Cost findings include an `estimated_monthly_cost` field calculated from a static pricing table (eu-west-1). The table output shows a `$/MO` column and the summary shows total estimated waste.
@@ -932,9 +983,9 @@ sift/
 │   └── config.go               # AWS credential/profile loading
 └── audit/
     ├── finding.go              # Finding struct definition
-    ├── provider.go             # Provider-neutral Scope/Provider abstraction + AWS adapter (RegisterAWS)
-    ├── registry.go             # Service self-registration (Register/CheckersFor)
-    ├── runner.go               # Generic parallel orchestrator (RunChecks)
+    ├── provider.go             # Provider-neutral Scope/Provider abstraction (no provider SDKs)
+    ├── registry.go             # Provider-aware self-registration (Register/CheckersFor, provider:module keys)
+    ├── runner.go               # Provider-neutral parallel orchestrator (RunScopedChecks)
     ├── process.go              # Concurrent processors (ProcessAll/ProcessAllMulti/FetchAll)
     ├── output.go               # JSON/CSV/table output formatter
     ├── thresholds.go           # Configurable thresholds
@@ -956,8 +1007,9 @@ sift/
     │   ├── json.go             # JSON renderer
     │   ├── ai.go               # AI enrichment (summary + recommendations)
     │   └── template.html       # HTML report template with CSS
-    └── aws/                     # AWS provider checkers (registered via RegisterAWS)
+    └── aws/                     # AWS provider checkers (registered via awsreg.Register)
         ├── aws.go                  # AWS provider wiring: embeds + registers remediations.json
+        ├── awsreg/                 # AWS↔core bridge: Register, RunChecks, Config, CheckFn
         ├── remediations.json       # AWS remediation templates (embedded, registered into the engine)
         ├── pricing/
         │   ├── pricing.go          # Price lookup (embedded + ~/.sift/prices.json override)
@@ -1064,6 +1116,17 @@ sift/
             ├── eventbridge.go      # Idle EventBridge buses
             ├── route53.go          # Empty hosted zones
             └── cloudfront.go       # Idle CloudFront distributions
+    └── aria/                    # VMware Aria Automation provider
+        ├── aria.go                 # Config load, client factory, scope accessor, Provider impl
+        ├── client/                 # REST client (bearer-token auth) + typed models
+        │   ├── client.go           # HTTP client, paged GetAll, Page envelope
+        │   ├── deployments.go      # Deployment model + ListDeployments
+        │   ├── projects.go         # Project model + ListProjects
+        │   └── resources.go        # Resource model + ListResources
+        ├── governance/
+        │   └── deployments.go      # Deployment provenance + ownership checks
+        └── ops/
+            └── resources.go        # Resource provisioning health (state/syncStatus)
 ```
 
 ## Authentication
