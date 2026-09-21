@@ -43,3 +43,6 @@ bin/
 
 # Log file
 *.log
+
+# Output file
+output/
