@@ -244,7 +244,7 @@ Create `~/.sift/tagging.json` to define your tagging policy:
 
 ```json
 {
-  "baseline_tags": ["ProductCode", "Environment"],
+  "baseline_tags": ["ProductCode", "Environment", "LeanIX_ID*"],
   "iac_tags": ["stack", "stack_env", "security_data_sensitivity", "stack_lifecycle", "project", "stack_version"],
   "cost_tags": ["Project", "UseCase"],
   "ownership_tags": ["TechnicalOwner", "BusinessOwner"],
@@ -264,6 +264,12 @@ Create `~/.sift/tagging.json` to define your tagging policy:
 | Cost | MEDIUM | Tags for cost allocation and tracking |
 | Ownership | LOW | Tags identifying technical and business owners |
 | Conditional | HIGH | Tags required only under certain conditions (e.g., Backup_Plan in production) |
+
+Tag rules are matched case-insensitively. A rule ending in `*` is a **prefix rule**: it is
+satisfied when the resource has *at least one* tag key beginning with that prefix. For example,
+`LeanIX_ID*` is satisfied by any of `LeanIX_ID`, `LeanIX_ID_1`, `LeanIX_ID_2`, and so on. Rules
+without `*` require an exact key match. Wildcards work in every tier (baseline, IaC, cost,
+ownership, and conditional required tags).
 
 ## VMware Aria Automation
 
