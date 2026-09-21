@@ -103,6 +103,25 @@ func hasTagCI(tagKeysLower map[string]bool, tag string) bool {
 	return tagKeysLower[strings.ToLower(tag)]
 }
 
+// matchesTagRule reports whether a resource satisfies a single tag rule.
+//
+// A rule ending in "*" is a prefix rule: it is satisfied if the resource has
+// AT LEAST ONE tag key beginning with the prefix (e.g. "LeanIX_ID*" matches
+// LeanIX_ID, LeanIX_ID_1, LeanIX_ID_2, ...). A rule without "*" keeps the
+// original exact case-insensitive key match. Matching is case-insensitive.
+func matchesTagRule(tagKeysLower map[string]bool, rule string) bool {
+	if strings.HasSuffix(rule, "*") {
+		prefix := strings.ToLower(strings.TrimSuffix(rule, "*"))
+		for key := range tagKeysLower {
+			if strings.HasPrefix(key, prefix) {
+				return true
+			}
+		}
+		return false
+	}
+	return hasTagCI(tagKeysLower, rule)
+}
+
 func getTagValueCI(tagMap map[string]string, tag string) (string, bool) {
 	for k, v := range tagMap {
 		if strings.EqualFold(k, tag) {
@@ -155,7 +174,7 @@ func AuditTagging(ctx context.Context, cfg aws.Config) ([]audit.Finding, error) 
 			// Tier 1: Baseline
 			var missingBaseline []string
 			for _, tag := range tagCfg.BaselineTags {
-				if !hasTagCI(tagKeysLower, tag) {
+				if !matchesTagRule(tagKeysLower, tag) {
 					missingBaseline = append(missingBaseline, tag)
 				}
 			}
@@ -182,7 +201,7 @@ func AuditTagging(ctx context.Context, cfg aws.Config) ([]audit.Finding, error) 
 			// Tier 2: IaC compliance
 			var missingIaC []string
 			for _, tag := range tagCfg.IaCTags {
-				if !hasTagCI(tagKeysLower, tag) {
+				if !matchesTagRule(tagKeysLower, tag) {
 					missingIaC = append(missingIaC, tag)
 				}
 			}
@@ -209,7 +228,7 @@ func AuditTagging(ctx context.Context, cfg aws.Config) ([]audit.Finding, error) 
 			// Tier 3: Cost allocation
 			var missingCost []string
 			for _, tag := range tagCfg.CostTags {
-				if !hasTagCI(tagKeysLower, tag) {
+				if !matchesTagRule(tagKeysLower, tag) {
 					missingCost = append(missingCost, tag)
 				}
 			}
@@ -246,7 +265,7 @@ func AuditTagging(ctx context.Context, cfg aws.Config) ([]audit.Finding, error) 
 						break
 					}
 				}
-				if match && !hasTagCI(tagKeysLower, tag) {
+				if match && !matchesTagRule(tagKeysLower, tag) {
 					d := fmt.Sprintf(
 						"missing %s tag (required when %s=%s)",
 						tag,
