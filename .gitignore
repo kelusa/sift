@@ -46,3 +46,6 @@ bin/
 
 # Output file
 output/
+
+# Internal test script
+utils/internal
