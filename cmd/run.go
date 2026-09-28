@@ -94,7 +94,7 @@ func runAudit(command, serviceFlag string, validServices map[string]bool, fn aud
 	if dbErr == nil {
 		defer db.Close()
 		if diff {
-			_, prev, err := db.LatestScan(profile, command)
+			_, prev, err := db.LatestScan("aws", profile, command)
 			if err == nil && prev != nil {
 				d := history.ComputeDiff(prev, allFindings)
 				fmt.Fprintf(os.Stderr, "\nDiff vs previous scan")
@@ -108,6 +108,7 @@ func runAudit(command, serviceFlag string, validServices map[string]bool, fn aud
 		if !noSave {
 			meta := history.ScanMeta{
 				ID:         fmt.Sprintf("%d", time.Now().UnixNano()),
+				Provider:   "aws",
 				Profile:    profile,
 				Command:    command,
 				Region:     strings.Join(regions(configs), ","),

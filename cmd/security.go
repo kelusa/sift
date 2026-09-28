@@ -6,8 +6,8 @@ import (
 	"sort"
 
 	"sift/audit"
+	"sift/audit/aws/security"
 	"sift/audit/history"
-	"sift/audit/security"
 
 	"github.com/spf13/cobra"
 )
@@ -21,7 +21,7 @@ var securityCmd = &cobra.Command{
 	Use:   "security",
 	Short: "Audit AWS resource security posture",
 	Run: func(cmd *cobra.Command, args []string) {
-		runAudit("security", securityServices, audit.ValidServices(security.Module), security.Audit)
+		runAudit("security", securityServices, audit.ValidServices("aws", security.Module), security.Audit)
 		if secGroupBy != "" {
 			printSecurityGroupBy(secGroupBy)
 		}
@@ -38,7 +38,7 @@ func printSecurityGroupBy(tagKey string) {
 	}
 	defer db.Close()
 
-	findings, err := db.Query("", "", "", "security", profile)
+	findings, err := db.Query("aws", "", "", "", "security", profile)
 	if err != nil || len(findings) == 0 {
 		return
 	}
@@ -118,8 +118,8 @@ func printSecurityGroupBy(tagKey string) {
 
 func init() {
 	securityCmd.Flags().
-		StringVar(&securityServices, "service", "", serviceUsage(audit.ValidServices(security.Module)))
+		StringVar(&securityServices, "service", "", serviceUsage(audit.ValidServices("aws", security.Module)))
 	securityCmd.Flags().
 		StringVar(&secGroupBy, "group-by", "", "Group findings by tag key (e.g., Project, Team)")
-	rootCmd.AddCommand(securityCmd)
+	awsCmd.AddCommand(securityCmd)
 }

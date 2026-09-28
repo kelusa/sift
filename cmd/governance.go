@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"sift/audit"
-	"sift/audit/governance"
+	"sift/audit/aws/governance"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/spf13/cobra"
@@ -50,5 +50,5 @@ func init() {
 		StringVar(&govServices, "service", "", "Comma-separated AWS services to scope (e.g., ec2,rds,s3)")
 	governanceCmd.Flags().
 		StringVar(&govCheck, "check", "", "Comma-separated governance checks (e.g., tagging)")
-	rootCmd.AddCommand(governanceCmd)
+	awsCmd.AddCommand(governanceCmd)
 }

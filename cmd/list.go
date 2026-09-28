@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"sift/audit"
-	"sift/audit/list"
+	"sift/audit/aws/list"
 	"sift/audit/progress"
 
 	"github.com/spf13/cobra"
@@ -86,5 +86,5 @@ var listCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(listCmd)
+	awsCmd.AddCommand(listCmd)
 }

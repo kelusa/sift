@@ -10,7 +10,7 @@ import (
 	"text/tabwriter"
 	"time"
 
-	"sift/audit/access"
+	"sift/audit/aws/access"
 
 	"github.com/spf13/cobra"
 )
@@ -150,5 +150,5 @@ func topOperations(ops map[string]int, limit int) string {
 
 func init() {
 	accessCmd.Flags().IntVar(&accessDays, "days", 30, "Number of days to look back")
-	rootCmd.AddCommand(accessCmd)
+	awsCmd.AddCommand(accessCmd)
 }

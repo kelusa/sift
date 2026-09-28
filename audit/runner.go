@@ -4,25 +4,25 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"strings"
 	"sync"
 	"time"
 
 	"sift/audit/progress"
-
-	"github.com/aws/aws-sdk-go-v2/aws"
 )
 
-type CheckFn func(context.Context, aws.Config) ([]Finding, error)
-
+// Checker is a named, provider-neutral audit unit.
+// CheckFn and the Scope it receives are defined in provider.go
 type Checker struct {
 	Name string
 	Fn   CheckFn
 }
 
-func RunChecks(
+// RunScopedChecks is the provider-neutral orchestrator. It runs the given
+// checkers against a single Scope (an AWS region, an Aria host, etc.),
+// filtering by service name when services is non-empty.
+func RunScopedChecks(
 	ctx context.Context,
-	cfg aws.Config,
+	scope Scope,
 	services []string,
 	all []Checker,
 	label string,
@@ -40,7 +40,6 @@ func RunChecks(
 			}
 		}
 	}
-
 	if len(checks) == 0 {
 		return nil, nil
 	}
@@ -51,9 +50,9 @@ func RunChecks(
 		subCtx := progress.WithSubProgress(ctx, true)
 		slog.Info("checking service", "service", checks[0].Name)
 		start := time.Now()
-		findings, err := checks[0].Fn(subCtx, cfg)
+		findings, err := checks[0].Fn(subCtx, scope)
 		if err != nil {
-			if isServiceNotAvailable(err) {
+			if scope.SkipError != nil && scope.SkipError(err) {
 				slog.Debug("service not available", "service", checks[0].Name, "error", err)
 				results[0] = []Finding{{
 					Service:   checks[0].Name,
@@ -80,9 +79,9 @@ func RunChecks(
 				defer wg.Done()
 				slog.Info("checking service", "service", name)
 				start := time.Now()
-				findings, err := fn(subCtx, cfg)
+				findings, err := fn(subCtx, scope)
 				if err != nil {
-					if isServiceNotAvailable(err) {
+					if scope.SkipError != nil && scope.SkipError(err) {
 						slog.Debug("service not available", "service", name, "error", err)
 						results[i] = []Finding{{
 							Service:   name,
@@ -119,25 +118,4 @@ func RunChecks(
 		out[i].ComputeID()
 	}
 	return out, nil
-}
-
-func isServiceNotAvailable(err error) bool {
-	msg := err.Error()
-	indicators := []string{
-		"ResourceNotFoundException",
-		"SubscriptionRequiredException",
-		"OptInRequired",
-		"InvalidClientTokenId",
-		"UnrecognizedClientException",
-		"NotSignedUp",
-		"is not subscribed",
-		"is not authorized to use this service",
-		"Namespace default not found",
-	}
-	for _, ind := range indicators {
-		if strings.Contains(msg, ind) {
-			return true
-		}
-	}
-	return false
 }

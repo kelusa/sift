@@ -45,19 +45,19 @@ var aiCmd = &cobra.Command{
 			}
 			context = ai.BuildContext(map[string][]audit.Finding{"finding": findings})
 		case aiService != "":
-			findings, err = db.Query(aiService, "", "", "", profile)
+			findings, err = db.Query(providerFilter, aiService, "", "", "", profile)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 				os.Exit(2)
 			}
 			context = ai.BuildContext(map[string][]audit.Finding{aiService: findings})
 		default:
-			findings, err = db.Query("", "", "", "", profile)
+			findings, err = db.Query(providerFilter, "", "", "", "", profile)
 			modules := []string{"security", "cost"}
 			if aiModule != "" {
 				modules = []string{aiModule}
 			}
-			grouped, err := db.FindingsByCommand(profile, modules)
+			grouped, err := db.FindingsByCommand(providerFilter, profile, modules)
 			if err != nil {
 				fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 				os.Exit(2)
@@ -99,5 +99,6 @@ func init() {
 	aiCmd.Flags().StringVar(&aiQuestion, "question", "", "Custom question to ask")
 	aiCmd.Flags().
 		StringVar(&aiPrompt, "prompt", "", "Prompt template name (e.g., executive, incident, compliance)")
+	addFilterFlags(aiCmd.Flags())
 	rootCmd.AddCommand(aiCmd)
 }

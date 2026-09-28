@@ -15,6 +15,7 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
+	"github.com/joho/godotenv"
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
 )
@@ -37,6 +38,9 @@ var rootCmd = &cobra.Command{
 	Use:   "sift",
 	Short: "AWS security and cost audit tool",
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		// Load .env (if present) so SIFT_* variables are available.
+		// Real environment variables already set take precedence (godotenv default).
+		_ = godotenv.Load()
 		setupLogging()
 	},
 }
@@ -129,13 +133,10 @@ func Execute() {
 
 func init() {
 	rootCmd.CompletionOptions.HiddenDefaultCmd = true
-	rootCmd.PersistentFlags().StringVar(&profile, "profile", "default", "AWS profile name")
 	rootCmd.PersistentFlags().
 		StringVar(&format, "format", "", "Output format (json|csv|table). Default: table for terminal, json for pipes")
 	rootCmd.PersistentFlags().
 		StringVar(&riskLevel, "risk-level", "", "Minimum risk level to show (MINIMAL|LOW|MEDIUM|HIGH|CRITICAL)")
-	rootCmd.PersistentFlags().
-		StringVar(&region, "region", "", "AWS region(s), comma-separated or 'all' (default: profile region)")
 	rootCmd.PersistentFlags().BoolVar(&verbose, "verbose", false, "Show debug-level log output")
 	rootCmd.PersistentFlags().BoolVar(&showProgress, "progress", false, "Show progress bars")
 	rootCmd.PersistentFlags().
@@ -149,7 +150,10 @@ func init() {
 	rootCmd.PersistentFlags().BoolVar(&diff, "diff", false, "Compare results to previous scan")
 }
 
-func buildAWSConfig() (context.Context, aws.Config, context.CancelFunc, error) {
+// resolveFormat applies the default output format (table for a terminal,
+// json for a pipe) when --format was not set, and validates the value.
+// Shared by all commands that produce output, regardless of provider.
+func resolveFormat() error {
 	if format == "" {
 		if term.IsTerminal(int(os.Stdout.Fd())) {
 			format = "table"
@@ -158,10 +162,14 @@ func buildAWSConfig() (context.Context, aws.Config, context.CancelFunc, error) {
 		}
 	}
 	if format != "json" && format != "csv" && format != "table" {
-		return nil, aws.Config{}, nil, fmt.Errorf(
-			"unknown format %q (use json, csv or table)",
-			format,
-		)
+		return fmt.Errorf("unknown format %q (use json, csv or table)", format)
+	}
+	return nil
+}
+
+func buildAWSConfig() (context.Context, aws.Config, context.CancelFunc, error) {
+	if err := resolveFormat(); err != nil {
+		return nil, aws.Config{}, nil, err
 	}
 	if riskLevel != "" {
 		valid := map[string]bool{

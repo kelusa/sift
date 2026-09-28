@@ -20,24 +20,35 @@ pre-commit install
 
 ## Usage
 
+AWS audit commands live under the `aws` provider group:
+
 ```bash
-sift <command> --profile <aws-profile> [flags]
+sift aws <command> --profile <aws-profile> [flags]
+```
+
+Cross-provider commands stay at the top level:
+
+```bash
+sift <report|history|ai|fix> [flags]
 ```
 
 ### Global flags
 
+These root-level flags apply to all commands:
+
 | Flag | Default | Description |
 |------|---------|-------------|
-| `--profile` | `default` | AWS profile name (from `~/.aws/config`) |
 | `--format` | `table` (terminal) / `json` (pipe) | Output format: `json`, `csv`, or `table` |
 | `--risk-level` | | Minimum risk level to show: `MINIMAL`, `LOW`, `MEDIUM`, `HIGH`, `CRITICAL` |
-| `--region` | profile region | AWS region(s), comma-separated or `all` |
 | `--sort-by` | `risk` | Sort results by: `risk` or `cost` |
+| `--concurrency` | | Maximum number of concurrent checks |
 | `--diff` | `false` | Compare results to previous scan |
 | `--no-save` | `false` | Don't save scan results to history |
 | `--verbose` | `false` | Show debug-level log output |
 | `--progress` | `false` | Show progress bars |
 | `--output`, `-o` | stdout | Write results to file instead of stdout |
+
+> `--profile` and `--region` are flags of the `sift aws` command group (they apply to `sift aws <subcommand>`), not root-level global flags. Cross-provider commands (`report`, `history`, `ai`) use `--provider` and `--account` to filter stored findings instead.
 
 ### Commands
 
@@ -47,14 +58,14 @@ Audit AWS resource security posture across services.
 
 ```bash
 # All services
-sift security --profile dev
+sift aws security --profile dev
 
 # Specific services
-sift security --profile dev --service ec2,s3
-sift security --profile dev --service eks
+sift aws security --profile dev --service ec2,s3
+sift aws security --profile dev --service eks
 
 # Only high and critical findings
-sift security --profile dev --risk-level HIGH
+sift aws security --profile dev --risk-level HIGH
 ```
 
 Available services: `ec2`, `sagemaker`, `s3`, `rds`, `eks`, `iam`, `secrets`, `glue`, `lambda`, `dynamodb`, `elb`, `dms`, `ecr`, `redshift`, `stepfunctions`, `backup`, `cloudtrail`, `guardduty`, `ebs`, `elasticache`, `opensearch`, `kms`, `kinesis`, `waf`, `cloudfront`, `acm`, `route53`, `sqs`, `sns`, `eventbridge`, `efs`, `docdb`, `msk`, `directory`, `cloudwatch`, `timestream`, `awsconfig`
@@ -65,21 +76,21 @@ Detect cost waste across AWS resources. Shows estimated monthly cost per resourc
 
 ```bash
 # All services
-sift cost --profile dev
+sift aws cost --profile dev
 
 # Specific services
-sift cost --profile dev --service ec2,s3
-sift cost --profile dev --service ebs,cloudwatch
+sift aws cost --profile dev --service ec2,s3
+sift aws cost --profile dev --service ebs,cloudwatch
 
 # Sort by highest cost first
-sift cost --profile dev --sort-by cost
+sift aws cost --profile dev --sort-by cost
 
 # Group waste by tag
-sift cost --profile dev --group-by Project
-sift cost --profile dev --group-by Team
+sift aws cost --profile dev --group-by Project
+sift aws cost --profile dev --group-by Team
 
 # Show what changed since last scan
-sift cost --profile dev --diff
+sift aws cost --profile dev --diff
 ```
 
 Available services: `ec2`, `ebs`, `rds`, `s3`, `eks`, `network`, `cloudwatch`, `ecr`, `secrets`, `glue`, `lambda`, `dynamodb`, `dms`, `elb`, `sagemaker`, `redshift`, `stepfunctions`, `backup`, `kms`, `vpn`, `waf`, `kinesis`, `awsconfig`, `elasticache`, `opensearch`, `efs`, `docdb`, `directory`, `timestream`, `quicksight`, `msk`, `sqs`, `sns`, `eventbridge`, `route53`, `cloudfront`
@@ -90,14 +101,14 @@ Audit operational risks and service limits.
 
 ```bash
 # All services
-sift ops --profile dev
+sift aws ops --profile dev
 
 # Specific services
-sift ops --profile dev --service glue
+sift aws ops --profile dev --service glue
 
 # Specific checks within a service
-sift ops --profile dev --service glue --check table_versions
-sift ops --profile dev --service glue --check crawlers,job_versions
+sift aws ops --profile dev --service glue --check table_versions
+sift aws ops --profile dev --service glue --check crawlers,job_versions
 ```
 
 Available services: `glue`
@@ -115,42 +126,42 @@ List AWS resources with metadata for inventory and discovery.
 
 ```bash
 # List all Glue resources
-sift list glue --profile dev
+sift aws list glue --profile dev
 
 # List specific resource types
-sift list glue jobs --profile dev
-sift list glue crawlers --profile dev --format csv -o crawlers.csv
+sift aws list glue jobs --profile dev
+sift aws list glue crawlers --profile dev --format csv -o crawlers.csv
 
 # List VPC subnets with IP usage
-sift list vpc --profile dev
-sift list vpc subnets --profile dev --format table
+sift aws list vpc --profile dev
+sift aws list vpc subnets --profile dev --format table
 
 # List EC2 instances
-sift list ec2 --profile dev
+sift aws list ec2 --profile dev
 
 # List RDS instances
-sift list rds --profile dev
+sift aws list rds --profile dev
 
 # List S3 buckets with size, versioning, access
-sift list s3 --profile dev
+sift aws list s3 --profile dev
 
 # List EBS volumes
-sift list ebs --profile dev
+sift aws list ebs --profile dev
 
 # List Lambda functions with invocation data
-sift list lambda --profile dev
+sift aws list lambda --profile dev
 
 # List EKS clusters with nodegroup details
-sift list eks --profile dev
+sift aws list eks --profile dev
 
 # List IAM roles with usage
-sift list iam --profile dev
+sift aws list iam --profile dev
 
 # List DynamoDB tables
-sift list dynamodb --profile dev
+sift aws list dynamodb --profile dev
 
 # List load balancers
-sift list elb --profile dev
+sift aws list elb --profile dev
 ```
 
 Available services: `glue`, `vpc`, `ec2`, `rds`, `s3`, `ebs`, `lambda`, `eks`, `iam`, `dynamodb`, `elb`
@@ -160,7 +171,7 @@ Available services: `glue`, `vpc`, `ec2`, `rds`, `s3`, `ebs`, `lambda`, `eks`, `
 Discover active AWS services in your account and show sift coverage. Uses AWS Config to detect which services have resources.
 
 ```bash
-sift discover --profile dev
+sift aws discover --profile dev
 ```
 
 Output shows resource counts per service, which sift modules cover each service (security, cost, list), and suggests commands to run.
@@ -177,16 +188,16 @@ Correlate findings across security, cost, and governance modules per resource. R
 
 ```bash
 # Single profile
-sift triage posture --profile dev
+sift aws triage posture --profile dev
 
 # Aggregated across environments
-sift triage posture --profile dev,qa,prd
+sift aws triage posture --profile dev,qa,prd
 
 # All profiles in history
-sift triage posture
+sift aws triage posture
 ```
 
-Requires prior scan data (`sift security`, `sift cost`, `sift governance`).
+Requires prior scan data (`sift aws security`, `sift aws cost`, `sift aws governance`).
 
 ##### Incident
 
@@ -194,10 +205,10 @@ Deep investigation of specific services during an incident.
 
 ```bash
 # EC2: posture + IAM + flow logs
-sift triage incident ec2 --profile dev --log-group /vpc/flowlogs
+sift aws triage incident ec2 --profile dev --log-group /vpc/flowlogs
 
 # Single instance
-sift triage incident ec2 --profile dev --log-group /vpc/flowlogs --instance i-0abc123
+sift aws triage incident ec2 --profile dev --log-group /vpc/flowlogs --instance i-0abc123
 ```
 
 | Flag | Required | Description |
@@ -211,13 +222,13 @@ Audit governance compliance across AWS resources. Config-driven checks for taggi
 
 ```bash
 # All governance checks
-sift governance --profile dev
+sift aws governance --profile dev
 
 # Tagging compliance only
-sift governance --profile dev --check tagging
+sift aws governance --profile dev --check tagging
 
 # Tagging scoped to specific services
-sift governance --profile dev --check tagging --service ec2,rds,s3
+sift aws governance --profile dev --check tagging --service ec2,rds,s3
 ```
 
 | Flag | Description |
@@ -233,7 +244,7 @@ Create `~/.sift/tagging.json` to define your tagging policy:
 
 ```json
 {
-  "baseline_tags": ["ProductCode", "Environment"],
+  "baseline_tags": ["ProductCode", "Environment", "LeanIX_ID*"],
   "iac_tags": ["stack", "stack_env", "security_data_sensitivity", "stack_lifecycle", "project", "stack_version"],
   "cost_tags": ["Project", "UseCase"],
   "ownership_tags": ["TechnicalOwner", "BusinessOwner"],
@@ -254,18 +265,75 @@ Create `~/.sift/tagging.json` to define your tagging policy:
 | Ownership | LOW | Tags identifying technical and business owners |
 | Conditional | HIGH | Tags required only under certain conditions (e.g., Backup_Plan in production) |
 
+Tag rules are matched case-insensitively. A rule ending in `*` is a **prefix rule**: it is
+satisfied when the resource has *at least one* tag key beginning with that prefix. For example,
+`LeanIX_ID*` is satisfied by any of `LeanIX_ID`, `LeanIX_ID_1`, `LeanIX_ID_2`, and so on. Rules
+without `*` require an exact key match. Wildcards work in every tier (baseline, IaC, cost,
+ownership, and conditional required tags).
+
+## VMware Aria Automation
+
+Sift also audits on-prem VMware Aria Automation (8.x). Aria commands live under the `aria`
+provider group:
+
+```bash
+sift aria <command> [--host https://aria.example.com] [--insecure]
+```
+
+### Authentication
+
+Aria commands authenticate with a bearer token supplied via the `SIFT_ARIA_TOKEN` environment
+variable (obtained from an authenticated browser session — the token is never passed on the
+command line or persisted to config). It can also be placed in a `.env` file in the working
+directory:
+
+```bash
+SIFT_ARIA_TOKEN=<bearer-token>
+```
+
+The host comes from `--host` or the `aria` section of `~/.sift/providers.json`:
+
+```json
+{
+  "aria": {
+    "host": "https://aria.example.com",
+    "insecure": false
+  }
+}
+```
+
+Use `--insecure` to skip TLS verification for appliances with self-signed certificates.
+
+### Commands
+
+```bash
+# Inventory: list deployments, projects, or deployment resources
+sift aria list deployments
+sift aria list projects
+sift aria list resources
+
+# Governance: deployment provenance (catalog/blueprint source) + ownership
+sift aria governance
+
+# Operational health: flag resources not in an OK state or out of sync
+sift aria ops
+```
+
+Aria findings flow into the same cross-provider `history`, `report`, and `ai` commands. Filter
+them with `--provider aria` and `--account <host>`.
+
 ## Estimated cost
 
 Cost findings include an `estimated_monthly_cost` field calculated from a static pricing table (eu-west-1). The table output shows a `$/MO` column and the summary shows total estimated waste.
 
-Pricing can be customized without rebuilding by placing a `prices.json` at `~/.sift/prices.json`. See `audit/pricing/prices.json` for the format.
+Pricing can be customized without rebuilding by placing a `prices.json` at `~/.sift/prices.json`. See `audit/aws/pricing/prices.json` for the format.
 
 ## Scan history & diff
 
 Scan results are stored in a local SQLite database at `~/.sift/sift.db`. Use `--diff` to compare against the previous scan:
 
 ```bash
-sift cost --profile dev --diff
+sift aws cost --profile dev --diff
 ```
 
 Output:
@@ -292,6 +360,9 @@ sift history --service ec2 --risk CRITICAL
 sift history --module security
 sift history --module cost
 
+# Filter by provider and account/identity
+sift history --provider aws --account dev
+
 # Track a specific finding over time
 sift history --finding <id>
 
@@ -306,6 +377,8 @@ sift history --service s3 --format json
 | `--service` | Filter findings by service |
 | `--risk` | Filter findings by risk level |
 | `--last` | Show last N scans |
+| `--provider` | Filter stored findings by provider (`aws`, `aria`). Default: all |
+| `--account` | Filter stored findings by account/identity. Default: all |
 
 ## AI analysis
 
@@ -316,17 +389,17 @@ Analyze findings with a local or remote LLM:
 docker compose up -d
 
 # Analyze latest findings
-sift ai --profile dev
+sift ai --account dev
 
 # Scope to module/service
-sift ai --profile dev --module security
-sift ai --profile dev --service ec2
+sift ai --account dev --module security
+sift ai --account dev --service ec2
 
 # Custom question
-sift ai --profile dev "What's the most urgent fix?"
+sift ai --account dev "What's the most urgent fix?"
 ```
 
-Configure the endpoint in `~/.sift/ai.json`. See [docs/ai.md](docs/ai.md) for full setup and options.
+Analysis reads from stored findings, so filter with `--provider aws|aria` and `--account <identity>` to scope which findings are analyzed. Configure the endpoint in `~/.sift/ai.json`. See [docs/ai.md](docs/ai.md) for full setup and options.
 
 ## Executive report
 
@@ -334,19 +407,19 @@ Generate a summary for business stakeholders:
 
 ```bash
 # Single environment
-sift report --profile dev
+sift report --account dev
 
 # Aggregated across environments
-sift report --profile icloud-dev,icloud-qa,icloud-prd
+sift report --account icloud-dev,icloud-qa,icloud-prd
 
 # HTML output
-sift report --profile dev --format html -o report.html
+sift report --account dev --format html -o report.html
 
 # JSON output
-sift report --profile dev --format json
+sift report --account dev --format json
 
 # With AI-generated summary and recommendations
-sift report --profile dev --ai
+sift report --account dev --ai
 ```
 
 Output includes:
@@ -365,6 +438,8 @@ The health score penalizes CRITICAL findings 4x more than LOW, giving a single t
 
 | Flag | Description |
 |------|-------------|
+| `--provider` | Filter stored findings by provider (`aws`, `aria`). Default: all |
+| `--account` | Filter stored findings by account/identity. Default: all |
 | `--format` | Output format: `text` (default), `html`, `json` |
 | `--ai` | Enrich report with AI-generated summary and recommended actions |
 | `-o` | Write output to file |
@@ -401,7 +476,7 @@ Example (JSON output):
 }
 ```
 
-Remediations can be customized without rebuilding by placing a `remediations.json` at `~/.sift/remediations.json`. See `audit/remediation/remediations.json` for the format.
+Remediations can be customized without rebuilding by placing a `remediations.json` at `~/.sift/remediations.json`. See `audit/aws/remediations.json` for the format.
 
 ### Executing remediations
 
@@ -894,31 +969,32 @@ sift/
 ├── docs/
 │   └── adding-a-service.md    # Developer guide for adding new services
 ├── cmd/                        # CLI commands (cobra)
-│   ├── root.go                 # Global flags
+│   ├── root.go                 # Root command + shared global flags (format, risk-level, etc.)
+│   ├── aws.go                  # AWS provider parent command (`sift aws`); owns --profile/--region
+│   ├── filters.go              # Shared --provider/--account filter flags for cross-provider commands
 │   ├── run.go                  # Shared audit runner + history save
-│   ├── security.go             # Security audit command
-│   ├── cost.go                 # Cost audit command
-│   ├── ops.go                  # Ops audit command
-│   ├── list.go                 # List command (registry-driven)
-│   ├── discover.go             # Service discovery command
-│   ├── triage.go               # Triage command (posture + incident subcommands)
-│   ├── governance.go           # Governance audit command
-│   ├── history.go              # Query scan history
-│   ├── report.go               # Executive summary report
-│   ├── ai.go                   # AI analysis command
-│   └── fix.go                  # Remediation execution
+│   ├── security.go             # `sift aws security` command
+│   ├── cost.go                 # `sift aws cost` command
+│   ├── ops.go                  # `sift aws ops` command
+│   ├── list.go                 # `sift aws list` command (registry-driven)
+│   ├── discover.go             # `sift aws discover` command
+│   ├── triage.go               # `sift aws triage` command (posture + incident subcommands)
+│   ├── governance.go           # `sift aws governance` command
+│   ├── access.go               # `sift aws access` command
+│   ├── history.go              # `sift history` (cross-provider)
+│   ├── report.go               # `sift report` executive summary (cross-provider)
+│   ├── ai.go                   # `sift ai` analysis (cross-provider)
+│   └── fix.go                  # `sift fix` remediation execution (cross-provider)
 ├── config/
 │   └── config.go               # AWS credential/profile loading
 └── audit/
     ├── finding.go              # Finding struct definition
-    ├── registry.go             # Service self-registration (Register/CheckersFor)
-    ├── runner.go               # Generic parallel orchestrator (RunChecks)
+    ├── provider.go             # Provider-neutral Scope/Provider abstraction (no provider SDKs)
+    ├── registry.go             # Provider-aware self-registration (Register/CheckersFor, provider:module keys)
+    ├── runner.go               # Provider-neutral parallel orchestrator (RunScopedChecks)
     ├── process.go              # Concurrent processors (ProcessAll/ProcessAllMulti/FetchAll)
     ├── output.go               # JSON/CSV/table output formatter
     ├── thresholds.go           # Configurable thresholds
-    ├── pricing/
-    │   ├── pricing.go          # Price lookup (embedded + ~/.sift/prices.json override)
-    │   └── prices.json         # Static pricing data (eu-west-1)
     ├── history/
     │   ├── db.go               # SQLite storage (scans, findings, queries)
     │   ├── migrations.go       # Versioned schema migrations
@@ -926,8 +1002,7 @@ sift/
     ├── progress/
     │   └── progress.go         # Progress bar utilities
     ├── remediation/
-    │   ├── remediation.go      # Remediation recommendation engine
-    │   └── remediations.json   # Remediation templates
+    │   └── remediation.go      # Provider-neutral remediation engine (RegisterTemplates + ~/.sift/remediations.json override)
     ├── ai/
     │   └── ai.go               # LLM integration (Ollama/OpenAI-compatible)
     ├── report/
@@ -938,107 +1013,126 @@ sift/
     │   ├── json.go             # JSON renderer
     │   ├── ai.go               # AI enrichment (summary + recommendations)
     │   └── template.html       # HTML report template with CSS
-    ├── security/
-    │   ├── security.go         # Module registration + Audit entry point
-    │   ├── sg.go               # Shared SG open-to-world helpers
-    │   ├── ec2.go              # EC2 posture analysis
-    │   ├── sagemaker.go        # SageMaker notebook + network exposure
-    │   ├── s3.go               # S3 bucket audit
-    │   ├── rds.go              # RDS instance audit
-    │   ├── eks.go              # EKS cluster audit
-    │   ├── iam.go              # IAM role policy analysis + caching
-    │   ├── secrets.go          # Secrets Manager rotation audit
-    │   ├── glue.go             # Glue catalog encryption + job security
-    │   ├── lambda.go           # Lambda public URLs + deprecated runtimes
-    │   ├── dynamodb.go         # DynamoDB encryption + PITR
-    │   ├── elb.go              # ELB exposure + DDoS readiness
-    │   ├── dms.go              # DMS public access + encryption
-    │   ├── ecr.go              # ECR scan-on-push + tag immutability
-    │   ├── redshift.go         # Redshift public access + encryption
-    │   ├── stepfunctions.go    # Step Functions logging + tracing
-    │   ├── backup.go           # Backup vault encryption
-    │   ├── baseline.go         # CloudTrail + GuardDuty (registered as cloudtrail, guardduty)
-    │   ├── ebs.go              # EBS volume encryption + public snapshots
-    │   ├── elasticache.go      # ElastiCache encryption + AUTH
-    │   ├── opensearch.go       # OpenSearch access control + encryption
-    │   ├── kms.go              # KMS key rotation + policy
-    │   ├── kinesis.go          # Kinesis stream encryption
-    │   ├── waf.go              # WAF rule coverage + rate limiting
-    │   ├── cloudfront.go       # CloudFront HTTPS + TLS + WAF
-    │   ├── acm.go              # ACM certificate expiry + renewal
-    │   ├── route53.go          # Route53 dangling records + DNSSEC
-    │   ├── sqs.go              # SQS public policies + encryption
-    │   ├── sns.go              # SNS public policies + encryption
-    │   ├── eventbridge.go      # EventBridge bus policies + DLQ
-    │   ├── efs.go              # EFS encryption at rest
-    │   ├── docdb.go            # DocDB public access + encryption
-    │   ├── msk.go              # MSK encryption + authentication
-    │   ├── directory.go        # Directory Service LDAPS + VPC
-    │   ├── cloudwatch.go       # CloudWatch log group encryption
-    │   ├── timestream.go       # Timestream CMK encryption
-    │   └── network.go          # VPC flow log queries
-    ├── triage/
-    │   ├── ec2.go              # Incident: EC2 deep investigation (IAM + flow logs)
-    │   ├── engine.go           # Posture: cross-module correlation + ranking
-    │   └── triage_test.go
-    ├── list/
-    │   ├── registry.go         # Lister registration + column definitions
-    │   ├── glue.go             # Glue jobs (run frequency, avg DPU) + crawlers
-    │   ├── vpc.go              # VPC subnets with IP usage
-    │   ├── ec2.go              # EC2 instances
-    │   ├── rds.go              # RDS instances
-    │   ├── s3.go               # S3 buckets (size, versioning, access)
-    │   ├── ebs.go              # EBS volumes
-    │   ├── lambda.go           # Lambda functions (invocations, runtime)
-    │   ├── eks.go              # EKS clusters (nodegroups, nodes, instance types)
-    │   ├── iam.go              # IAM roles (last used, policies, trust)
-    │   ├── dynamodb.go         # DynamoDB tables (mode, items, PITR)
-    │   └── elb.go              # Load balancers (type, scheme, targets)
-    ├── discover/
-    │   └── discover.go         # Service discovery via AWS Config
-    ├── ops/
-    │   ├── ops.go              # Module const + Audit entry point
-    │   └── glue.go             # Crawler version limit checks
-    ├── governance/
-    │   └── tagging.go          # Tag compliance (baseline, IaC, cost, ownership, conditional)
-    └── cost/
-        ├── cost.go             # Module registration + Audit entry point
-        ├── ec2.go              # Stopped instances, prev-gen, unused EIPs
-        ├── ebs.go              # Unattached volumes, old snapshots, GP2→GP3
-        ├── rds.go              # Stopped/oversized RDS instances
-        ├── s3.go               # Lifecycle policies + multipart uploads
-        ├── eks.go              # Empty clusters, prev-gen nodes
-        ├── network.go          # Idle NAT gateways
-        ├── cloudwatch.go       # Log groups without retention
-        ├── ecr.go              # Repos without lifecycle policies
-        ├── secrets.go          # Unused secrets
-        ├── glue.go             # Dev endpoints, job cost analysis
-        ├── lambda.go           # Unused functions, provisioned concurrency
-        ├── dynamodb.go         # Provisioned mode, unused GSIs
-        ├── dms.go              # Idle/oversized DMS instances
-        ├── elb.go              # Idle load balancers
-        ├── sagemaker.go        # Stopped notebooks
-        ├── redshift.go         # Oversized clusters
-        ├── stepfunctions.go    # Unused state machines
-        ├── backup.go           # Old recovery points
-        ├── kms.go              # Unrotated customer-managed keys
-        ├── vpn.go              # Idle VPN connections
-        ├── waf.go              # Unused Web ACLs
-        ├── kinesis.go          # Idle streams
-        ├── awsconfig.go        # Over-broad recording, unused rules
-        ├── elasticache.go      # Idle/oversized clusters
-        ├── opensearch.go       # Idle/oversized domains
-        ├── efs.go              # Unused file systems
-        ├── docdb.go            # Idle DocumentDB clusters
-        ├── directory.go        # Idle directory services
-        ├── timestream.go       # Unused Timestream databases
-        ├── quicksight.go       # Unused QuickSight resources
-        ├── msk.go              # Idle MSK clusters
-        ├── sqs.go              # Idle SQS queues
-        ├── sns.go              # Idle SNS topics
-        ├── eventbridge.go      # Idle EventBridge buses
-        ├── route53.go          # Empty hosted zones
-        └── cloudfront.go       # Idle CloudFront distributions
+    └── aws/                     # AWS provider checkers (registered via awsreg.Register)
+        ├── aws.go                  # AWS provider wiring: embeds + registers remediations.json
+        ├── awsreg/                 # AWS↔core bridge: Register, RunChecks, Config, CheckFn
+        ├── remediations.json       # AWS remediation templates (embedded, registered into the engine)
+        ├── pricing/
+        │   ├── pricing.go          # Price lookup (embedded + ~/.sift/prices.json override)
+        │   ├── graviton.go         # Graviton savings estimates
+        │   └── prices.json         # Static pricing data (eu-west-1)
+        ├── security/
+        │   ├── security.go         # Module registration + Audit entry point
+        │   ├── sg.go               # Shared SG open-to-world helpers
+        │   ├── ec2.go              # EC2 posture analysis
+        │   ├── sagemaker.go        # SageMaker notebook + network exposure
+        │   ├── s3.go               # S3 bucket audit
+        │   ├── rds.go              # RDS instance audit
+        │   ├── eks.go              # EKS cluster audit
+        │   ├── iam.go              # IAM role policy analysis + caching
+        │   ├── secrets.go          # Secrets Manager rotation audit
+        │   ├── glue.go             # Glue catalog encryption + job security
+        │   ├── lambda.go           # Lambda public URLs + deprecated runtimes
+        │   ├── dynamodb.go         # DynamoDB encryption + PITR
+        │   ├── elb.go              # ELB exposure + DDoS readiness
+        │   ├── dms.go              # DMS public access + encryption
+        │   ├── ecr.go              # ECR scan-on-push + tag immutability
+        │   ├── redshift.go         # Redshift public access + encryption
+        │   ├── stepfunctions.go    # Step Functions logging + tracing
+        │   ├── backup.go           # Backup vault encryption
+        │   ├── baseline.go         # CloudTrail + GuardDuty (registered as cloudtrail, guardduty)
+        │   ├── ebs.go              # EBS volume encryption + public snapshots
+        │   ├── elasticache.go      # ElastiCache encryption + AUTH
+        │   ├── opensearch.go       # OpenSearch access control + encryption
+        │   ├── kms.go              # KMS key rotation + policy
+        │   ├── kinesis.go          # Kinesis stream encryption
+        │   ├── waf.go              # WAF rule coverage + rate limiting
+        │   ├── cloudfront.go       # CloudFront HTTPS + TLS + WAF
+        │   ├── acm.go              # ACM certificate expiry + renewal
+        │   ├── route53.go          # Route53 dangling records + DNSSEC
+        │   ├── sqs.go              # SQS public policies + encryption
+        │   ├── sns.go              # SNS public policies + encryption
+        │   ├── eventbridge.go      # EventBridge bus policies + DLQ
+        │   ├── efs.go              # EFS encryption at rest
+        │   ├── docdb.go            # DocDB public access + encryption
+        │   ├── msk.go              # MSK encryption + authentication
+        │   ├── directory.go        # Directory Service LDAPS + VPC
+        │   ├── cloudwatch.go       # CloudWatch log group encryption
+        │   ├── timestream.go       # Timestream CMK encryption
+        │   └── network.go          # VPC flow log queries
+        ├── triage/
+        │   ├── ec2.go              # Incident: EC2 deep investigation (IAM + flow logs)
+        │   ├── engine.go           # Posture: cross-module correlation + ranking
+        │   └── triage_test.go
+        ├── list/
+        │   ├── registry.go         # Lister registration + column definitions
+        │   ├── glue.go             # Glue jobs (run frequency, avg DPU) + crawlers
+        │   ├── vpc.go              # VPC subnets with IP usage
+        │   ├── ec2.go              # EC2 instances
+        │   ├── rds.go              # RDS instances
+        │   ├── s3.go               # S3 buckets (size, versioning, access)
+        │   ├── ebs.go              # EBS volumes
+        │   ├── lambda.go           # Lambda functions (invocations, runtime)
+        │   ├── eks.go              # EKS clusters (nodegroups, nodes, instance types)
+        │   ├── iam.go              # IAM roles (last used, policies, trust)
+        │   ├── dynamodb.go         # DynamoDB tables (mode, items, PITR)
+        │   └── elb.go              # Load balancers (type, scheme, targets)
+        ├── discover/
+        │   └── discover.go         # Service discovery via AWS Config
+        ├── ops/
+        │   ├── ops.go              # Module const + Audit entry point
+        │   └── glue.go             # Crawler version limit checks
+        ├── governance/
+        │   └── tagging.go          # Tag compliance (baseline, IaC, cost, ownership, conditional)
+        └── cost/
+            ├── cost.go             # Module registration + Audit entry point
+            ├── ec2.go              # Stopped instances, prev-gen, unused EIPs
+            ├── ebs.go              # Unattached volumes, old snapshots, GP2→GP3
+            ├── rds.go              # Stopped/oversized RDS instances
+            ├── s3.go               # Lifecycle policies + multipart uploads
+            ├── eks.go              # Empty clusters, prev-gen nodes
+            ├── network.go          # Idle NAT gateways
+            ├── cloudwatch.go       # Log groups without retention
+            ├── ecr.go              # Repos without lifecycle policies
+            ├── secrets.go          # Unused secrets
+            ├── glue.go             # Dev endpoints, job cost analysis
+            ├── lambda.go           # Unused functions, provisioned concurrency
+            ├── dynamodb.go         # Provisioned mode, unused GSIs
+            ├── dms.go              # Idle/oversized DMS instances
+            ├── elb.go              # Idle load balancers
+            ├── sagemaker.go        # Stopped notebooks
+            ├── redshift.go         # Oversized clusters
+            ├── stepfunctions.go    # Unused state machines
+            ├── backup.go           # Old recovery points
+            ├── kms.go              # Unrotated customer-managed keys
+            ├── vpn.go              # Idle VPN connections
+            ├── waf.go              # Unused Web ACLs
+            ├── kinesis.go          # Idle streams
+            ├── awsconfig.go        # Over-broad recording, unused rules
+            ├── elasticache.go      # Idle/oversized clusters
+            ├── opensearch.go       # Idle/oversized domains
+            ├── efs.go              # Unused file systems
+            ├── docdb.go            # Idle DocumentDB clusters
+            ├── directory.go        # Idle directory services
+            ├── timestream.go       # Unused Timestream databases
+            ├── quicksight.go       # Unused QuickSight resources
+            ├── msk.go              # Idle MSK clusters
+            ├── sqs.go              # Idle SQS queues
+            ├── sns.go              # Idle SNS topics
+            ├── eventbridge.go      # Idle EventBridge buses
+            ├── route53.go          # Empty hosted zones
+            └── cloudfront.go       # Idle CloudFront distributions
+    └── aria/                    # VMware Aria Automation provider
+        ├── aria.go                 # Config load, client factory, scope accessor, Provider impl
+        ├── client/                 # REST client (bearer-token auth) + typed models
+        │   ├── client.go           # HTTP client, paged GetAll, Page envelope
+        │   ├── deployments.go      # Deployment model + ListDeployments
+        │   ├── projects.go         # Project model + ListProjects
+        │   └── resources.go        # Resource model + ListResources
+        ├── governance/
+        │   └── deployments.go      # Deployment provenance + ownership checks
+        └── ops/
+            └── resources.go        # Resource provisioning health (state/syncStatus)
 ```
 
 ## Authentication

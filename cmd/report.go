@@ -22,14 +22,18 @@ var reportCmd = &cobra.Command{
 		}
 		defer db.Close()
 
-		// Determine profiles
+		// Determine accounts (stored scan identity). --account filters; empty
+		// means "all accounts seen in history".
 		var profiles []string
-		if cmd.Flags().Changed("profile") {
-			profiles = strings.Split(profile, ",")
+		if account != "" {
+			profiles = strings.Split(account, ",")
 		} else {
 			scans, _ := db.RecentScans(100)
 			seen := map[string]bool{}
 			for _, s := range scans {
+				if providerFilter != "" && s.Provider != providerFilter {
+					continue
+				}
 				if !seen[s.Profile] {
 					seen[s.Profile] = true
 					profiles = append(profiles, s.Profile)
@@ -37,7 +41,7 @@ var reportCmd = &cobra.Command{
 			}
 		}
 
-		r := report.Build(db, profiles)
+		r := report.Build(db, providerFilter, profiles)
 		if r.Timestamp == "" {
 			fmt.Fprintln(os.Stderr, "No scan data found. Run sift security/cost first.")
 			os.Exit(2)
@@ -78,5 +82,6 @@ var reportCmd = &cobra.Command{
 func init() {
 	reportCmd.Flags().
 		Bool("ai", false, "Enrich report with AI-generated summary and recommendations")
+	addFilterFlags(reportCmd.Flags())
 	rootCmd.AddCommand(reportCmd)
 }

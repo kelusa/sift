@@ -1,5 +1,5 @@
 {
-    "baseline_tags": ["ProductCode", "Environment"],
+    "baseline_tags": ["ProductCode", "Environment", "LeanIX_ID*"],
     "iac_tags": ["stack", "stack_env", "security_data_sensitivity", "stack_lifecycle", "project", "stack_version"],
     "cost_tags": ["Project", "UseCase"],
     "ownership_tags": ["TechnicalOwner", "BusinessOwner"],

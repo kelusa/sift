@@ -43,3 +43,9 @@ bin/
 
 # Log file
 *.log
+
+# Output file
+output/
+
+# Internal test script
+utils/internal

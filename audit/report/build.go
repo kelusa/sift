@@ -11,7 +11,7 @@ import (
 	"sift/audit/history"
 )
 
-func Build(db *history.DB, profiles []string) *ReportData {
+func Build(db *history.DB, provider string, profiles []string) *ReportData {
 	r := &ReportData{
 		Profiles: profiles,
 		Risks:    make(map[string]int),
@@ -21,7 +21,7 @@ func Build(db *history.DB, profiles []string) *ReportData {
 	var allFindings []audit.Finding
 	for _, p := range profiles {
 		for _, mod := range []string{"security", "cost", "governance"} {
-			meta, findings, err := db.LatestScan(strings.TrimSpace(p), mod)
+			meta, findings, err := db.LatestScan(provider, strings.TrimSpace(p), mod)
 			if err != nil || meta == nil {
 				continue
 			}

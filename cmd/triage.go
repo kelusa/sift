@@ -11,8 +11,8 @@ import (
 	"sift/audit"
 	"sift/audit/history"
 	"sift/audit/progress"
-	"sift/audit/security"
-	"sift/audit/triage"
+	"sift/audit/aws/security"
+	"sift/audit/aws/triage"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/spf13/cobra"
@@ -52,7 +52,7 @@ var triagePostureCmd = &cobra.Command{
 		var allFindings []audit.Finding
 		for _, p := range profiles {
 			for _, mod := range []string{"security", "cost", "governance"} {
-				_, findings, err := db.LatestScan(strings.TrimSpace(p), mod)
+				_, findings, err := db.LatestScan("aws", strings.TrimSpace(p), mod)
 				if err != nil {
 					continue
 				}
@@ -159,5 +159,5 @@ func init() {
 
 	triageIncidentCmd.AddCommand(triageIncidentEC2Cmd)
 	triageCmd.AddCommand(triagePostureCmd, triageIncidentCmd)
-	rootCmd.AddCommand(triageCmd)
+	awsCmd.AddCommand(triageCmd)
 }
